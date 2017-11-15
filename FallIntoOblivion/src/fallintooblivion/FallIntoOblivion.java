@@ -15,8 +15,7 @@ public class FallIntoOblivion {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        System.out.println("lel");
-        System.out.println("Piguelmilatop esteve aqui ");
+        
     }
     
 }
