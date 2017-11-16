@@ -5,91 +5,62 @@
  */
 package fallintooblivion;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.io.FileReader;
-import java.io.IOException;
-import javax.xml.bind.DatatypeConverter;
 
 /**
  *
- * @author Asus
+ * Calcula o HASH de um ficheiro usando o algoritmo SHA256
+ * Apenas é necessário chamar a função calculateMAC para calcular o mac de um
+ * ficheiro eg.
+ * String mac = SHA256.calculateMAC("C:\somefile.txt");
+ * 
  */
 public class SHA256 {
     
-    public SHA256(){}
-    
-    public String getHash_File(FileReader data) throws NoSuchAlgorithmException,IOException 
-    {
-        char[] buff = new char[1];
- 		
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
+    /**
+    * Calcular o MAC de um ficheiro usando o algoritmo SHA256
+    * O ficheiro é lido dentro desta função.
+    * Se ocorrer um erro é atirada uma excepção
+    * Antes da função terminar é chamada a função getSHA256Checksum() para
+    * converter o checksum the byte[] para String
+    *
+    * @param  filename  a localização do ficheiro
+    * @return           checksum em string
+    */
+    public String calculateMAC(String filename) throws Exception {
+        InputStream fileIS =  new FileInputStream(filename);
 
-        while(data.read(buff) > 0)
-                md.update( (byte)buff[0] );
-
-        byte[] h= new byte[15]; // 16bytes --> 128bits
-
-        h = md.digest();
-        String hash = DatatypeConverter.printHexBinary(h);
+        byte[] buffer = new byte[1024];
+        MessageDigest complete = MessageDigest.getInstance("SHA256");
         
-        return hash;
+        int numRead;
+        
+        do {
+         numRead = fileIS.read(buffer);
+         if (numRead > 0) {
+           complete.update(buffer, 0, numRead);
+           }
+         } while (numRead != -1);
+        
+        fileIS.close();
+        
+        return getSHA256Checksum(complete.digest());
     }
     
-    
-     public String getHash_String(String data) throws NoSuchAlgorithmException
-    {
- 		
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        md.update(data.getBytes());
-
-        byte[] h= new byte[15]; // 16bytes --> 128bits
-
-        h = md.digest();
-        String hash = DatatypeConverter.printHexBinary(h);
-        
-        return hash;
+    /**
+    * Converte o checksum do ficheiro de um array de bytes para uma string
+    *
+    * @param  digest  byte array com o checksup
+    * @return         checksum em string
+    */
+    private String getSHA256Checksum(byte[] digest) {
+        String result = "";
+        for (int i=0; i < digest.length; i++) {
+            result += Integer.toString( ( digest[i] & 0xff ) + 0x100, 16).substring( 1 );
+        }
+        return result;
     }
-    
-    public String getFirst128bits(String hash)
-    {
-        String[] arr= new String[hash.length()];
-        for (int i=0; i< hash.length();i++)
-        {
-            arr[i]= String.valueOf(hash.charAt(i));
-        }
-        
-        String left_bits="";
-        for (int i=0; i< hash.length();i++)
-        {
-            if(i==32)
-                break;
-
-            left_bits=left_bits + arr[i];
-        }
-        return left_bits.toString();
- 
-    }
-    
-    public String getSecond128bits(String hash)
-    {
-        String[] arr= new String[hash.length()];
-        for (int i=0; i< hash.length();i++)
-        {
-            arr[i]= String.valueOf(hash.charAt(i));
-        }
-        
-        String right_bits="";
-        for (int i=32; i< hash.length();i++)
-        {
-            right_bits=right_bits + arr[i];
-        }
-        return right_bits.toString();
-    }
-    
-    
-    
-    
-    
     
 }
