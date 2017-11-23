@@ -7,11 +7,7 @@ package fallintooblivion;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.charset.Charset;
-import java.nio.file.*;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.file.WatchService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +20,7 @@ public class FallIntoOblivion {
 
     private static Configs conf = new Configs();
     private static boolean propertiesSemaphore;
-    
+
     public static void main(String[] args) throws IOException {
         //test if conf file exists if not create a default
         if(conf.getProp("cfgexists").isEmpty()){
@@ -35,30 +31,62 @@ public class FallIntoOblivion {
             conf.saveProp("keysize", "16");
             conf.saveProp("cyphertype", "aes_cbc");
         }
-            
-        String choice = new String();
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        Runnable periodicTask = new Runnable() {
-            public void run() {
-                if(!propertiesSemaphore){
-                    System.out.println("thread work");
-                    propertiesSemaphore = true;
-                    String setenabled = conf.getProp("setenabled");
-                    String hashtype = conf.getProp("hashtype");
-                    String keysize = conf.getProp("keysize");
-                    String cyphertype = conf.getProp("cyphertype");
-                    propertiesSemaphore = false;
-                    
-                    if (setenabled.equals(false)) //stopping if setenabled was disabled in the configs
-                        return;
-                }
-                else{
-                    System.out.println("Thread didn't run due to properties being changed");
-                }
+        //The user is supposed to drop his trash into FallIntoOblivion, it is then cyphered and put into the trashed folder
+        //Test if FallIntoOblivion folder exists and if not create it
+        File Dir = new File("Fall_Into_Oblivion");
+        if (!Dir.exists()) {
+            System.out.println("creating directory: " + Dir.getName());
+            boolean result = false;
+            try{
+                Dir.mkdir();
+                result = true;
+            } 
+            catch(SecurityException se){
+                System.out.println("Something went wrong with creating your new very useless trash folder");
+            }        
+            if(result) {    
+                System.out.println("DIR created");  
             }
+        }
+        
+        //Test if FallIntoOblivion has a trashed folder if not create it
+        File TrashDir = new File(Dir.getName() + "/Trashed");
+        if (!TrashDir.exists()) {
+            System.out.println("creating directory: " + TrashDir.getName());
+            boolean result = false;
+            try{
+                TrashDir.mkdir();
+                result = true;
+            } 
+            catch(SecurityException se){
+                System.out.println("You shouln't delete your Trashed folder");
+            }        
+            if(result) {    
+                System.out.println("Trashed DIR created");  
+            }
+        }
+        
+        WatchDir watcher = new WatchDir(Dir.toPath());
+        
+        //program starts here
+        String choice;
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        @SuppressWarnings("empty-statement")
+        Runnable periodicTask = () -> {
+            while(propertiesSemaphore) //wait for acess
+                ;
+            System.out.println("thread work");
+            watcher.processEvents();
+            propertiesSemaphore = true;
+            String setenabled = conf.getProp("setenabled");
+            String hashtype = conf.getProp("hashtype");
+            String keysize = conf.getProp("keysize");
+            String cyphertype = conf.getProp("cyphertype");
+            propertiesSemaphore = false;
+            if (setenabled.equals(false)) //stopping if setenabled was disabled in the configs
+                return;
         };
         executor.scheduleAtFixedRate(periodicTask, 5, 10, TimeUnit.SECONDS);
-        
         while(true){
             System.out.print("FallIntoOblivion> ");
             choice=Ler.umaString();
@@ -93,6 +121,7 @@ public class FallIntoOblivion {
         }
     }
 
+    @SuppressWarnings("empty-statement")
     private static void setCyper(String[] words) {
         switch (words[1]){
                 case "sha256": 
@@ -105,6 +134,7 @@ public class FallIntoOblivion {
                     if (Integer.parseInt(words[2])<1)
                         System.out.println("setcypher sha256 [keysize] \nInsert a valid positive number for parameter [keysize]");
                     else {
+                        System.out.println("Uploading to configurations");
                         while(!propertiesSemaphore)
                             ;//wait for acess
                         propertiesSemaphore=true;
@@ -123,6 +153,7 @@ public class FallIntoOblivion {
                     if (Integer.parseInt(words[2])<1)
                         System.out.println("setcypher aes_cbc [keysize] \nInsert a valid positive number for parameter [keysize]");
                     else {
+                        System.out.println("Uploading to configurations");
                         while(!propertiesSemaphore)
                             ;//wait for acess
                         propertiesSemaphore=true;
@@ -140,6 +171,7 @@ public class FallIntoOblivion {
     private static void setHash(String[] words) {
         switch (words[1]){
                 case "sha1":
+                    System.out.println("Uploading to configurations");
                     while(!propertiesSemaphore)
                         ; //wait for acess
                     propertiesSemaphore=true;
@@ -154,6 +186,7 @@ public class FallIntoOblivion {
     private static void setEnabled(String[] words) {
         switch (words[1]){
                 case "true":
+                    System.out.println("Uploading to configurations");
                     while(!propertiesSemaphore)
                         ;//wait for acess
                     propertiesSemaphore=true;
@@ -161,6 +194,7 @@ public class FallIntoOblivion {
                     propertiesSemaphore=false;
                     break;
                 case "false":
+                    System.out.println("Uploading to configurations");
                     while(!propertiesSemaphore)
                         ;//wait for acess
                     propertiesSemaphore=true;
