@@ -29,7 +29,7 @@ public class SHA256 {
     * @param  filename  a localização do ficheiro
     * @return           checksum em string
     */
-    public String calculateMAC(String filename) throws Exception {
+    public static String calculateMAC(String filename) throws Exception {
         InputStream fileIS =  new FileInputStream(filename);
 
         byte[] buffer = new byte[1024];
@@ -55,7 +55,7 @@ public class SHA256 {
     * @param  digest  byte array com o checksup
     * @return         checksum em string
     */
-    private String getSHA256Checksum(byte[] digest) {
+    private static String getSHA256Checksum(byte[] digest) {
         String result = "";
         for (int i=0; i < digest.length; i++) {
             result += Integer.toString( ( digest[i] & 0xff ) + 0x100, 16).substring( 1 );
