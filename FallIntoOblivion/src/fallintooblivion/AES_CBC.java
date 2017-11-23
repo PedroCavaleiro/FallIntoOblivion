@@ -1,48 +1,48 @@
 package fallintooblivion;
 
 import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
-public class AES_CBC{
-
-	private static String plainText;
-	private static byte[] cipherText;
-	private static String symetricKey;
-        private static byte[] iv; 
-
-	//contrutor utizado na cifragem
-	public AES_CBC(String plainText,String symetricKey,byte[] iv){
-		this.plainText = plainText;
-		this.symetricKey = symetricKey;
-                this.iv=iv;
-	}
+public class AES_CBC {
+    
+    public static byte[] encrypt(String key, String IV, byte[] file) {
         
-        //construtor utilizado na decifragem
-        public AES_CBC(byte[] cipherText, String symetricKey,byte[] iv){
-            this.cipherText=cipherText;
-            this.symetricKey = symetricKey;
-            this.iv=iv;
-            plainText= new String();
+        try {
+            IvParameterSpec iv = new IvParameterSpec(IV.getBytes("UTF-8"));
+            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
+
+            byte[] encrypted = cipher.doFinal(file);
+
+            return encrypted;
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
-        
-        public static void setCipherText(byte[] cipherText) {
-            AES_CBC.cipherText = cipherText;
-        }
-        
-	public static byte[] encrypt() throws Exception{
-		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                SecretKey key = new SecretKeySpec(DatatypeConverter.parseHexBinary(symetricKey), "AES");
-		cipher.init(Cipher.ENCRYPT_MODE,key,new IvParameterSpec(iv));
-		cipherText=cipher.doFinal(plainText.getBytes("UTF-8"));
-                return cipherText;
-	}	
 
-	public static byte[] decrypt() throws Exception{
-		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                SecretKey key = new SecretKeySpec(DatatypeConverter.parseHexBinary(symetricKey), "AES");
-		cipher.init(Cipher.DECRYPT_MODE,key,new IvParameterSpec(iv));
-		return cipher.doFinal(cipherText);
-	}
+        return null;
+    }
+    
+    public static byte[] decrypt(String key, String IV, byte[] file) {
+        try {
+            IvParameterSpec iv = new IvParameterSpec(IV.getBytes("UTF-8"));
+            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+
+            byte[] original = file;
+
+            return original;
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return null;
+    }
+    
 }
