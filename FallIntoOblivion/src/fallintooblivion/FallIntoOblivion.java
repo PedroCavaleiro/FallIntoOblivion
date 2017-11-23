@@ -25,6 +25,13 @@ public class FallIntoOblivion {
     private static Configs conf = new Configs();
     private static boolean propertiesSemaphore;
     
+    private static final String availableCommands = "Available commands: setcypher sethash setenabled\n";
+    private static final String setCypherCommandString = "setcypher [cyphertype] [keysize]\nCypher Types: aes_cbc\n";
+    private static final String setHashCommandString = "sethash [hashtype] \nHash Algorithms: sha256\n";
+    
+    private static final String setCypherInvalidKeySizeErr = " [keysize] \nInsert a valid number for parameter [keysize]\n";
+    private static final String setCypherIncalidKeyErr = " \nInsert a valid positive number for parameter [keysize]\n";
+    
     public static void main(String[] args) throws IOException {
         //test if conf file exists if not create a default
         if(conf.getProp("cfgexists").isEmpty()){
@@ -77,15 +84,15 @@ public class FallIntoOblivion {
                     if(words.length == 3)
                         setCyper(words);
                     else if(words.length == 2)
-                       System.out.println("setcypher [cyphertype] [keysize]\n cypher types inlude: aes_cbc sha256");
+                       System.out.println(setCypherCommandString);
                     else
-                       System.out.println("setcypher [cyphertype] [keysize]");
+                       System.out.println(setCypherCommandString);
                     break;
                 case "sethash":
                     if(words.length == 2)
                         setHash(words);
                     else
-                        System.out.println("sethash [hashtype]");
+                        System.out.println(setHashCommandString);
                     break;
                 case "setenabled":
                     if(words.length == 2)
@@ -96,7 +103,7 @@ public class FallIntoOblivion {
                 case "exit":
                     return;
                 default:
-                    System.out.println("Commands include: setcypher sethash setenabled"); //add new commands here too
+                    System.out.println(availableCommands);
                     break;
             }
         }
@@ -108,11 +115,11 @@ public class FallIntoOblivion {
                     try{
                         Integer.parseInt(words[2]);
                     } catch(NumberFormatException e) {
-                        System.out.println("setcypher aes_cbc [keysize] \nInsert a valid number for parameter [keysize]");
+                        System.out.println("setcypher aes_cbc" + setCypherInvalidKeySizeErr);
                         return;
                     }
                     if (Integer.parseInt(words[2])<1)
-                        System.out.println("setcypher aes_cbc [keysize] \nInsert a valid positive number for parameter [keysize]");
+                        System.out.println("setcypher aes_cbc [keysize]" + setCypherIncalidKeyErr);
                     else {
                         while(!propertiesSemaphore)
                             ;//wait for acess
@@ -123,7 +130,7 @@ public class FallIntoOblivion {
                     }
                     break;
                 default:
-                    System.out.println("setcypher [keytype] [keysize]\nKeyTypes include: aes_cbc sha256"); //add new types here too
+                    System.out.println(setCypherCommandString);
                     break;
         }
     }
@@ -138,7 +145,7 @@ public class FallIntoOblivion {
                     propertiesSemaphore=false;
                     break;
                 default:
-                    System.out.println("sethash [hashtype] \nHashTypes include: sha1"); //add new types here too
+                    System.out.println(setHashCommandString); //add new types here too
         }
     }
 
