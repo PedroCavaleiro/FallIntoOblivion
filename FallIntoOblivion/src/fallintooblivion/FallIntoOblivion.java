@@ -25,12 +25,13 @@ public class FallIntoOblivion {
     private static Configs conf = new Configs();
     private static boolean propertiesSemaphore;
     
-    private static final String availableCommands = "Available commands: setcypher sethash setenabled\n";
+    private static final String availableCommands = "Available commands: setcypher sethash setenabled showconfig\n";
     private static final String setCypherCommandString = "setcypher [cyphertype] [keysize]\nCypher Types: aes_cbc\n";
     private static final String setHashCommandString = "sethash [hashtype] \nHash Algorithms: sha256\n";
     
     private static final String setCypherInvalidKeySizeErr = " [keysize] \nInsert a valid number for parameter [keysize]\n";
     private static final String setCypherIncalidKeyErr = " \nInsert a valid positive number for parameter [keysize]\n";
+    
     
     public static void main(String[] args) throws IOException {
         //test if conf file exists if not create a default
@@ -38,7 +39,7 @@ public class FallIntoOblivion {
             System.out.println("cfg created");
             conf.saveProp("cfgexists", "1");
             conf.saveProp("setenabled", "false");
-            conf.saveProp("hashtype", "sha1");
+            conf.saveProp("hashtype", "sha256");
             conf.saveProp("keysize", "16");
             conf.saveProp("cyphertype", "aes_cbc");
         }
@@ -98,7 +99,15 @@ public class FallIntoOblivion {
                     if(words.length == 2)
                         setEnabled(words);
                     else
-                        System.out.println("setenabled [boolean]");
+                        System.out.println("setenabled [boolean]\n");
+                    break;
+                case "showconfig":
+                    System.out.println("Current Configuration");
+                    System.out.println(conf.getProp("setenabled"));
+                    System.out.println(conf.getProp("hashtype"));
+                    System.out.println(conf.getProp("keysize"));
+                    System.out.println(conf.getProp("cyphertype"));
+                    System.out.println();
                     break;
                 case "exit":
                     return;
@@ -166,7 +175,7 @@ public class FallIntoOblivion {
                     propertiesSemaphore=false;
                     break;
                 default:
-                    System.out.println("setEnabled [boolean]"); //add new types here too
+                    System.out.println("setEnabled [boolean]\n"); //add new types here too
         }
     }
 }
