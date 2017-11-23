@@ -41,7 +41,15 @@ public class FallIntoOblivion {
         Runnable periodicTask = new Runnable() {
             public void run() {
                 if(!propertiesSemaphore){
-                    System.out.println("thread work");
+                    
+                    // Clears the text on the line where the cursor is
+                    // deleting the "FallIntoOblivion> " text
+                    System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+                    // This seems to be for debug purposes only
+                    System.out.println("LOG DEBUG: thread work");
+                    // the input area desapeared so you make a new one
+                    System.out.print("FallIntoOblivion> ");
+                    
                     propertiesSemaphore = true;
                     String setenabled = conf.getProp("setenabled");
                     String hashtype = conf.getProp("hashtype");
