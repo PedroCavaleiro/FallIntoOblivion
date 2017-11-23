@@ -102,6 +102,7 @@ public class FallIntoOblivion {
         String choice;
         executor.scheduleAtFixedRate(periodicTask, 5, 10, TimeUnit.SECONDS);
         while(true){
+            watcher.processEvents(); //temporarily here
             System.out.print("FallIntoOblivion> ");
             choice=Ler.umaString();
             String[] words = choice.split("\\s+");
