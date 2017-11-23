@@ -47,8 +47,6 @@ public class FallIntoOblivion {
                     System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
                     // This seems to be for debug purposes only
                     System.out.println("LOG DEBUG: thread work");
-                    // the input area desapeared so you make a new one
-                    System.out.print("FallIntoOblivion> ");
                     
                     propertiesSemaphore = true;
                     String setenabled = conf.getProp("setenabled");
@@ -56,6 +54,9 @@ public class FallIntoOblivion {
                     String keysize = conf.getProp("keysize");
                     String cyphertype = conf.getProp("cyphertype");
                     propertiesSemaphore = false;
+                    
+                    // the input area desapeared so you make a new one
+                    System.out.print("FallIntoOblivion> ");
                     
                     if (setenabled.equals(false)) //stopping if setenabled was disabled in the configs
                         return;
@@ -103,24 +104,6 @@ public class FallIntoOblivion {
 
     private static void setCyper(String[] words) {
         switch (words[1]){
-                case "sha256": 
-                    try{
-                        Integer.parseInt(words[2]);
-                    } catch(NumberFormatException e) {
-                        System.out.println("setcypher sha256 [keysize] \nInsert a valid number for parameter [keysize]");
-                        return;
-                    }
-                    if (Integer.parseInt(words[2])<1)
-                        System.out.println("setcypher sha256 [keysize] \nInsert a valid positive number for parameter [keysize]");
-                    else {
-                        while(!propertiesSemaphore)
-                            ;//wait for acess
-                        propertiesSemaphore=true;
-                        conf.saveProp("cyphertype", words[1]);
-                        conf.saveProp("keysize", words[2]);
-                        propertiesSemaphore=false;
-                    }
-                    break;
                 case "aes_cbc": 
                     try{
                         Integer.parseInt(words[2]);
@@ -147,7 +130,7 @@ public class FallIntoOblivion {
 
     private static void setHash(String[] words) {
         switch (words[1]){
-                case "sha1":
+                case "sha256":
                     while(!propertiesSemaphore)
                         ; //wait for acess
                     propertiesSemaphore=true;
