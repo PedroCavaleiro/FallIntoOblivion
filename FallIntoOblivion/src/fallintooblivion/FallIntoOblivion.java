@@ -74,7 +74,7 @@ public class FallIntoOblivion {
         }
                 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        Runnable periodicTask = new Runnable() {
+        Runnable periodicTaskEncrypt = new Runnable() {
             public void run() {
                 while(propertiesSemaphore) //wait for access
                     ;
@@ -90,19 +90,31 @@ public class FallIntoOblivion {
                 String keysize = conf.getProp("keysize");
                 String cyphertype = conf.getProp("cyphertype");
                 propertiesSemaphore = false;
-
+                
+                if(!WatchDir.semaphoreFoldersToEncrypt){
+                    WatchDir.semaphoreFoldersToEncrypt = true;
+                    WatchDir.foldersToEncrypt.toString();
+                    WatchDir.semaphoreFoldersToEncrypt = false;
+                }
+                    
                 // the input area desapeared so you make a new one
                 System.out.print("FallIntoOblivion> ");
                 if (setenabled.equals(false)) //stopping if setenabled was disabled in the configs
                     return;
             }
         };
-        
         WatchDir watcher = new WatchDir(Dir.toPath()); //Instanciation of the new trash monitor
+        Runnable TaskDetect = new Runnable() {
+            public void run() {
+                System.out.println("detect running");
+                watcher.processEvents();
+                System.out.println("detect Stopping");
+            }
+        };
         String choice;
-        executor.scheduleAtFixedRate(periodicTask, 5, 10, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(periodicTaskEncrypt, 5, 10 , TimeUnit.SECONDS);
+        executor.schedule(TaskDetect, 5, TimeUnit.SECONDS);
         while(true){
-            watcher.processEvents(); //temporarily here
             System.out.print("FallIntoOblivion> ");
             choice=Ler.umaString();
             String[] words = choice.split("\\s+");

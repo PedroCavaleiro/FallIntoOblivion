@@ -19,6 +19,8 @@ public class WatchDir {
     private final WatchService watcher;
     private final Map<WatchKey,Path> keys;
     private boolean trace = false;
+    public static ArrayList foldersToEncrypt = new ArrayList<String>();
+    public static boolean semaphoreFoldersToEncrypt = false;
  
     @SuppressWarnings("unchecked")
     static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -35,7 +37,7 @@ public class WatchDir {
     }
     
         private void register(Path dir) throws IOException {
-        WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+        WatchKey key = dir.register(watcher, ENTRY_CREATE);
         if (trace) {
             Path prev = keys.get(key);
             if (prev == null) {
@@ -57,6 +59,7 @@ public class WatchDir {
             try {
                 key = watcher.take();
             } catch (InterruptedException x) {
+                System.out.println("watchertake went wrong");
                 return;
             }
  
@@ -81,6 +84,11 @@ public class WatchDir {
  
                 // print out event
                 System.out.format("%s: %s\n", event.kind().name(), child);
+                semaphoreFoldersToEncrypt = true;
+                foldersToEncrypt.add(child.toString());
+                System.out.println(foldersToEncrypt.toString());
+                semaphoreFoldersToEncrypt = false;
+                
             }
  
             // reset key and remove from set if directory no longer accessible
@@ -94,5 +102,6 @@ public class WatchDir {
                 }
             }
         }
+            System.out.println("watch process ended");
     }
 }
