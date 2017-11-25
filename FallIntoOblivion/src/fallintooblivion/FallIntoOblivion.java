@@ -8,6 +8,7 @@ package fallintooblivion;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -93,14 +94,17 @@ public class FallIntoOblivion {
                 
                 if(!WatchDir.semaphoreFoldersToEncrypt){
                     WatchDir.semaphoreFoldersToEncrypt = true;
-                    WatchDir.foldersToEncrypt.toString();
+                    ArrayList foldersToEncrypt = WatchDir.foldersToEncrypt; //Instead of this check for diferences and sync
                     WatchDir.semaphoreFoldersToEncrypt = false;
                 }
                     
                 // the input area desapeared so you make a new one
                 System.out.print("FallIntoOblivion> ");
                 if (setenabled.equals(false)) //stopping if setenabled was disabled in the configs
-                    return;
+                    return;                   //Everything above this is supposed to run even if it's not setEnabled
+                
+                //Encypting
+                
             }
         };
         WatchDir watcher = new WatchDir(Dir.toPath()); //Instanciation of the new trash monitor
