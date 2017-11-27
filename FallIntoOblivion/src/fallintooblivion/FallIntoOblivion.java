@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -20,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 public class FallIntoOblivion {
 
     private static Configs conf = new Configs();
-    private static boolean propertiesSemaphore;
+    private static ReentrantLock propertiesLock = new ReentrantLock();
     
     private static final String availableCommands = "Available commands: setcypher sethash setenabled showconfig\n";
     private static final String setCypherCommandString = "setcypher [cyphertype] [keysize]\nCypher Types: aes_cbc\n";
@@ -74,28 +77,31 @@ public class FallIntoOblivion {
             }
         }
                 
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService executorEncrypt = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService executorDetect = Executors.newSingleThreadScheduledExecutor();
         Runnable periodicTaskEncrypt = new Runnable() {
             public void run() {
-                while(propertiesSemaphore) //wait for access
-                    ;
                 // Clears the text on the line where the cursor is
                 // deleting the "FallIntoOblivion> " text
                 System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
                 // This seems to be for debug purposes only
-                System.out.println("LOG DEBUG: thread work");
-
-                propertiesSemaphore = true;
-                String setenabled = conf.getProp("setenabled");
-                String hashtype = conf.getProp("hashtype");
-                String keysize = conf.getProp("keysize");
-                String cyphertype = conf.getProp("cyphertype");
-                propertiesSemaphore = false;
+                System.out.println("LOG DEBUG: Encryptyon work is running");
+                String setenabled = "false";
+                propertiesLock.lock();
+                try{
+                    setenabled = conf.getProp("setenabled");
+                    String hashtype = conf.getProp("hashtype");
+                    String keysize = conf.getProp("keysize");
+                    String cyphertype = conf.getProp("cyphertype");
+                } finally {
+                    propertiesLock.unlock();
+                }
                 
-                if(!WatchDir.semaphoreFoldersToEncrypt){
-                    WatchDir.semaphoreFoldersToEncrypt = true;
-                    ArrayList foldersToEncrypt = WatchDir.foldersToEncrypt; //Instead of this check for diferences and sync
-                    WatchDir.semaphoreFoldersToEncrypt = false;
+                WatchDir.foldersToEncryptLock.lock();
+                try{
+                    System.out.println(WatchDir.foldersToEncrypt.toString());
+                }   finally {
+                    WatchDir.foldersToEncryptLock.unlock();
                 }
                     
                 // the input area desapeared so you make a new one
@@ -110,52 +116,57 @@ public class FallIntoOblivion {
         WatchDir watcher = new WatchDir(Dir.toPath()); //Instanciation of the new trash monitor
         Runnable TaskDetect = new Runnable() {
             public void run() {
-                System.out.println("detect running");
+                // Clears the text on the line where the cursor is
+                // deleting the "FallIntoOblivion> " text
+                System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+                // This seems to be for debug purposes only
+                System.out.println("LOG DEBUG: Detection work is now running");
                 watcher.processEvents();
                 System.out.println("detect Stopping");
             }
         };
         String choice;
-        executor.scheduleAtFixedRate(periodicTaskEncrypt, 5, 10 , TimeUnit.SECONDS);
-        executor.schedule(TaskDetect, 5, TimeUnit.SECONDS);
+        executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 10, 10 , TimeUnit.SECONDS);
+        executorDetect.schedule(TaskDetect, 5, TimeUnit.SECONDS);
         while(true){
             System.out.print("FallIntoOblivion> ");
             choice=Ler.umaString();
             String[] words = choice.split("\\s+");
-            switch (words[0]){
-                case "setcypher":
-                    if(words.length == 3)
-                        setCyper(words);
-                    else if(words.length == 2)
-                       System.out.println(setCypherCommandString);
-                    else
-                       System.out.println(setCypherCommandString);
-                    break;
-                case "sethash":
-                    if(words.length == 2)
-                        setHash(words);
-                    else
-                        System.out.println(setHashCommandString);
-                    break;
-                case "setenabled":
-                    if(words.length == 2)
-                        setEnabled(words);
-                    else
-                        System.out.println("setenabled [boolean]\n");
-                    break;
-                case "showconfig":
-                    System.out.println("Current Configuration");
-                    System.out.println(conf.getProp("setenabled"));
-                    System.out.println(conf.getProp("hashtype"));
-                    System.out.println(conf.getProp("keysize"));
-                    System.out.println(conf.getProp("cyphertype"));
-                    System.out.println();
-                    break;
-                case "exit":
-                    return;
-                default:
-                    System.out.println(availableCommands);
-                    break;
+            if(!choice.isEmpty())
+                switch (words[0]){
+                    case "setcypher":
+                        if(words.length == 3)
+                            setCyper(words);
+                        else if(words.length == 2)
+                           System.out.println(setCypherCommandString);
+                        else
+                           System.out.println(setCypherCommandString);
+                        break;
+                    case "sethash":
+                        if(words.length == 2)
+                            setHash(words);
+                        else
+                            System.out.println(setHashCommandString);
+                        break;
+                    case "setenabled":
+                        if(words.length == 2)
+                            setEnabled(words);
+                        else
+                            System.out.println("setenabled [boolean]\n");
+                        break;
+                    case "showconfig":
+                        System.out.println("Current Configuration");
+                        System.out.println(conf.getProp("setenabled"));
+                        System.out.println(conf.getProp("hashtype"));
+                        System.out.println(conf.getProp("keysize"));
+                        System.out.println(conf.getProp("cyphertype"));
+                        System.out.println();
+                        break;
+                    case "exit":
+                        return;
+                    default:
+                        System.out.println(availableCommands);
+                        break;
             }
         }
     }
@@ -174,12 +185,14 @@ public class FallIntoOblivion {
                         System.out.println("setcypher aes_cbc [keysize]" + setCypherIncalidKeyErr);
                     else {
                         System.out.println("Uploading to configurations");
-                        while(!propertiesSemaphore)
-                            ;//wait for acess
-                        propertiesSemaphore=true;
-                        conf.saveProp("cyphertype", words[1]);
-                        conf.saveProp("keysize", words[2]);
-                        propertiesSemaphore=false;
+                        propertiesLock.lock();
+                        try{
+                            conf.saveProp("cyphertype", words[1]);
+                            conf.saveProp("keysize", words[2]);
+                        }finally {
+                            propertiesLock.unlock();
+                            System.out.println("Uploaded");
+                        }
                     }
                     break;
                 default:
@@ -191,11 +204,14 @@ public class FallIntoOblivion {
     private static void setHash(String[] words) {
         switch (words[1]){
                 case "sha256":
-                    while(!propertiesSemaphore)
-                        ; //wait for acess
-                    propertiesSemaphore=true;
-                    conf.saveProp("hashtype", words[1]);
-                    propertiesSemaphore=false;
+                    System.out.println("Uploading to configurations");
+                    propertiesLock.lock();
+                    try{
+                        conf.saveProp("hashtype", words[1]);
+                    } finally {
+                        propertiesLock.unlock();
+                        System.out.println("Uploaded");
+                    }
                     break;
                 default:
                     System.out.println(setHashCommandString); //add new types here too
@@ -206,19 +222,23 @@ public class FallIntoOblivion {
         switch (words[1]){
                 case "true":
                     System.out.println("Uploading to configurations");
-                    while(!propertiesSemaphore)
-                        ;//wait for acess
-                    propertiesSemaphore=true;
-                    conf.saveProp("setenabled", words[1]);
-                    propertiesSemaphore=false;
+                    propertiesLock.lock();
+                    try{
+                        conf.saveProp("setenabled", words[1]);
+                    } finally {
+                        propertiesLock.unlock();
+                        System.out.println("Uploaded");
+                    }
                     break;
                 case "false":
                     System.out.println("Uploading to configurations");
-                    while(!propertiesSemaphore)
-                        ;//wait for acess
-                    propertiesSemaphore=true;
-                    conf.saveProp("setenabled", words[1]);
-                    propertiesSemaphore=false;
+                    propertiesLock.lock();
+                    try{
+                        conf.saveProp("setenabled", words[1]);
+                    } finally {
+                        propertiesLock.unlock();
+                        System.out.println("Uploaded");
+                    }
                     break;
                 default:
                     System.out.println("setEnabled [boolean]\n"); //add new types here too

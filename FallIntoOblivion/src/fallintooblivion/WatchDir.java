@@ -10,7 +10,9 @@ import static java.nio.file.StandardWatchEventKinds.*;
 import static java.nio.file.LinkOption.*;
 import java.nio.file.attribute.*;
 import java.io.*;
+import static java.lang.Thread.sleep;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  *
  * @author Miguel Brandão
@@ -20,7 +22,7 @@ public class WatchDir {
     private final Map<WatchKey,Path> keys;
     private boolean trace = false;
     public static ArrayList foldersToEncrypt = new ArrayList<String>();
-    public static boolean semaphoreFoldersToEncrypt = false;
+    public static ReentrantLock foldersToEncryptLock = new ReentrantLock();
  
     @SuppressWarnings("unchecked")
     static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -84,11 +86,13 @@ public class WatchDir {
  
                 // print out event
                 System.out.format("%s: %s\n", event.kind().name(), child);
-                semaphoreFoldersToEncrypt = true;
-                foldersToEncrypt.add(child.toString());
-                System.out.println(foldersToEncrypt.toString());
-                semaphoreFoldersToEncrypt = false;
-                
+                foldersToEncryptLock.lock();
+                try{
+                    foldersToEncrypt.add(child.toString());
+                    System.out.println(foldersToEncrypt.toString());
+                }   finally {
+                    foldersToEncryptLock.unlock();
+                }
             }
  
             // reset key and remove from set if directory no longer accessible
