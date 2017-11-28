@@ -111,6 +111,7 @@ public class FallIntoOblivion {
                 
                 //Encypting
                 
+                
             }
         };
         WatchDir watcher = new WatchDir(Dir.toPath()); //Instanciation of the new trash monitor
