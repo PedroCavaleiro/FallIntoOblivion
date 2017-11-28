@@ -9,6 +9,11 @@ import java.util.Properties;
 public class Configs {
     public static Properties prop = new Properties();
     
+    /**
+     * Guardamos uma definição do programa
+     * @param title     nome da definição
+     * @param property  configuração
+     */
     public void saveProp(String title, String property){
         try{
             prop.setProperty(title,property);
@@ -17,6 +22,12 @@ public class Configs {
             System.out.println("Something went wrong saving your configs");
         }
     }
+    
+    /**
+     * Lêmos uma definição do programa
+     * @param title nome da definição
+     * @return valor da definição
+     */
     public String getProp(String title){
         String returnMe = "";
         try{

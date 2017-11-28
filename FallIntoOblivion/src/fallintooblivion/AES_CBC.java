@@ -6,6 +6,13 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class AES_CBC {
     
+    /**
+     * Encripta um ficheiro usando AES-CBC
+     * @param key  chave the encriptação
+     * @param IV   IV 
+     * @param file bytes do ficheiro a encriptar
+     * @return     bytes do ficheiro encriptado
+     */
     public static byte[] encrypt(String key, String IV, byte[] file) {
         
         try {
@@ -26,6 +33,13 @@ public class AES_CBC {
         return null;
     }
     
+    /**
+     * Desencripta um ficheiro que foi encriptado usando AES-CBC
+     * @param key   chave para desencriptar
+     * @param IV    IV usado para encriptar
+     * @param file  bytes do ficheiro a desencriptar
+     * @return      bytes do ficheiro a encriptar
+     */
     public static byte[] decrypt(String key, String IV, byte[] file) {
         try {
             IvParameterSpec iv = new IvParameterSpec(IV.getBytes("UTF-8"));

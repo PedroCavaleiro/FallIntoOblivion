@@ -85,7 +85,7 @@ public class FallIntoOblivion {
                 // deleting the "FallIntoOblivion> " text
                 System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
                 // This seems to be for debug purposes only
-                System.out.println("LOG DEBUG: Encryptyon work is running");
+                System.out.println("LOG DEBUG: Encryption work is running");
                 String setenabled = "false";
                 propertiesLock.lock();
                 try{
@@ -136,7 +136,7 @@ public class FallIntoOblivion {
                 switch (words[0]){
                     case "setcypher":
                         if(words.length == 3)
-                            setCyper(words);
+                            setCypher(words);
                         else if(words.length == 2)
                            System.out.println(setCypherCommandString);
                         else
@@ -156,14 +156,14 @@ public class FallIntoOblivion {
                         break;
                     case "showconfig":
                         System.out.println("Current Configuration");
-                        System.out.println(conf.getProp("setenabled"));
-                        System.out.println(conf.getProp("hashtype"));
-                        System.out.println(conf.getProp("keysize"));
-                        System.out.println(conf.getProp("cyphertype"));
+                        System.out.println("Encryptor Running: " + conf.getProp("setenabled"));
+                        System.out.println("HASH Algorithm: " + conf.getProp("hashtype"));
+                        System.out.println("Cypher Type: " + conf.getProp("cyphertype"));
+                        System.out.println("Key Size: " + conf.getProp("keysize"));
                         System.out.println();
                         break;
                     case "exit":
-                        return;
+                        System.exit(0);
                     default:
                         System.out.println(availableCommands);
                         break;
@@ -171,8 +171,12 @@ public class FallIntoOblivion {
         }
     }
 
+    /**
+     * Definimos qual o cypher a ser usado
+     * @param words um array de strings que contem os comandos necessários
+     */
     @SuppressWarnings("empty-statement")
-    private static void setCyper(String[] words) {
+    private static void setCypher(String[] words) {
         switch (words[1]){
                 case "aes_cbc": 
                     try{
@@ -201,6 +205,10 @@ public class FallIntoOblivion {
         }
     }
 
+    /**
+     * Define o hash a ser usado
+     * @param words um array de strings que contem os comandos necessários
+     */
     private static void setHash(String[] words) {
         switch (words[1]){
                 case "sha256":
@@ -217,7 +225,11 @@ public class FallIntoOblivion {
                     System.out.println(setHashCommandString); //add new types here too
         }
     }
-
+    
+    /**
+     * Definimos se o programa está a encriptar os ficheiros
+     * @param words um array de strings que contem os comandos necessários
+     */
     private static void setEnabled(String[] words) {
         switch (words[1]){
                 case "true":
