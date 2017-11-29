@@ -136,8 +136,8 @@ public class FallIntoOblivion {
                                     "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".pk");
                             
                             String zeroHASH = SHA256.calculateStringMAC("0000");
-                            System.out.println(zeroHASH.subSequence(0, 32).toString());
-                            byte[] encBytes = AES_CBC.encrypt(zeroHASH.subSequence(0, 32).toString(), "0000000000000000", fBytes);
+                            System.out.println(zeroHASH.subSequence(0, 16).toString()); //INVALID KEY SIZE
+                            byte[] encBytes = AES_CBC.encrypt(zeroHASH.subSequence(0, 16).toString(), "0000000000000000", fBytes);
                             Ler.escreverFicheiro("Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(), cyphertype.replaceAll("_",""), encBytes);
                             
                             file.delete();

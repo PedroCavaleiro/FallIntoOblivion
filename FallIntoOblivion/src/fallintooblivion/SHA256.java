@@ -53,7 +53,6 @@ public class SHA256 {
         MessageDigest hash = MessageDigest.getInstance("SHA-256");
         byte[] textBytes = text.getBytes();
         hash.update(textBytes);
-        System.out.println(getSHA256Checksum(hash.digest()));
         return getSHA256Checksum(hash.digest());
     }
     
