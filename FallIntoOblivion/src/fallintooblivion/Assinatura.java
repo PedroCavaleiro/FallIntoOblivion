@@ -75,7 +75,7 @@ public class Assinatura {
   
     }
 
-   public boolean verificaAssinatura(String inPK, String inSignature, String inFilePath) throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, Exception{
+   public boolean verificaAssinatura(String inFilePath, String inSignature, String inPK) throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, Exception{
        
        FileInputStream keyfis = new FileInputStream(inPK);
         byte[] encKey = new byte[keyfis.available()]; 
