@@ -20,7 +20,7 @@ public class mainASSINATURA {
     public static void main(String[] args) throws NoSuchAlgorithmException, IOException, FileNotFoundException, SignatureException, InvalidKeyException, Exception {
       Assinatura a= new Assinatura();
       //a.gerarChaves();
-      a.verificaAssinatura();
+      //a.verificaAssinatura();
     }
     
 }

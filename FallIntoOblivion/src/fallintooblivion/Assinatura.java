@@ -75,9 +75,9 @@ public class Assinatura {
   
     }
 
-   public void verificaAssinatura() throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, Exception{
+   public boolean verificaAssinatura(String inPK, String inSignature, String inFilePath) throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, Exception{
        
-       FileInputStream keyfis = new FileInputStream("PubKey");
+       FileInputStream keyfis = new FileInputStream(inPK);
         byte[] encKey = new byte[keyfis.available()]; 
         keyfis.read(encKey);
         keyfis.close();
@@ -87,7 +87,7 @@ public class Assinatura {
        KeyFactory keyFactory = KeyFactory.getInstance("DSA");
        PublicKey pubKey =keyFactory.generatePublic(pubKeySpec);
        
-       FileInputStream sigfis = new FileInputStream("sig");
+       FileInputStream sigfis = new FileInputStream(inSignature);
         byte[] sigToVerify = new byte[sigfis.available()]; 
         sigfis.read(sigToVerify);
         sigfis.close();
@@ -96,7 +96,7 @@ public class Assinatura {
        Signature sign2 = Signature.getInstance("DSA");
        sign2.initVerify(pubKey);
        
-       FileInputStream datafis = new FileInputStream("ola.txt");
+       FileInputStream datafis = new FileInputStream(inFilePath);
        BufferedInputStream bufin = new BufferedInputStream(datafis);
 
         byte[] buffer = new byte[1024];
@@ -110,12 +110,10 @@ public class Assinatura {
        
        
        if(sign2.verify(sigToVerify)){
-           System.out.println("verifica");
+           return true;
        } 
        else {
-           System.out.println("nao verifica");
+           return false;
        }
-       
-       
    }
 }
