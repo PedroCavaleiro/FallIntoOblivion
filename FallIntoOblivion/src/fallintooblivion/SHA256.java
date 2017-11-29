@@ -33,7 +33,7 @@ public class SHA256 {
         InputStream fileIS =  new FileInputStream(filename);
 
         byte[] buffer = new byte[1024];
-        MessageDigest complete = MessageDigest.getInstance("SHA256");
+        MessageDigest complete = MessageDigest.getInstance("SHA-256");
         
         int numRead;
         
@@ -49,6 +49,14 @@ public class SHA256 {
         return getSHA256Checksum(complete.digest());
     }
     
+    public static String calculateStringMAC(String text) throws Exception {
+        MessageDigest hash = MessageDigest.getInstance("SHA-256");
+        byte[] textBytes = text.getBytes();
+        hash.update(textBytes);
+        System.out.println(getSHA256Checksum(hash.digest()));
+        return getSHA256Checksum(hash.digest());
+    }
+    
     /**
     * Converte o checksum do ficheiro de um array de bytes para uma string
     *
@@ -60,7 +68,7 @@ public class SHA256 {
         for (int i=0; i < digest.length; i++) {
             result += Integer.toString( ( digest[i] & 0xff ) + 0x100, 16).substring( 1 );
         }
-        System.out.println(result.toString());
+        //System.out.println(result.toString());
         return result;
     }
     

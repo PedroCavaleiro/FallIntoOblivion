@@ -20,7 +20,8 @@ public class mainASSINATURA {
     public static void main(String[] args) throws NoSuchAlgorithmException, IOException, FileNotFoundException, SignatureException, InvalidKeyException, Exception {
       Assinatura a= new Assinatura();
       //a.gerarChaves("ola.txt", "signature", "pubKey");
-      System.out.println(a.verificaAssinatura("ola.txt", "signature", "pubKey"));
+      //System.out.println(a.verificaAssinatura("Fall_Into_Oblivion/Trashed/Sem nome.rtf/Sem", "signature", "pubKey"));
+      //SHA256.calculateStringMAC("teste");
     }
     
 }

@@ -67,5 +67,10 @@ public class Ler{
         return getBytes;
     }
    
+    public static void escreverFicheiro(String filepath, String extension, byte[] bytes) throws Exception {
+        FileOutputStream fsOut = new FileOutputStream(filepath + "." + extension);
+        fsOut.write(bytes);
+        fsOut.close();
+    }
     
 }

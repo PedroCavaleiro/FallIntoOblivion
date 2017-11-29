@@ -7,14 +7,11 @@ package fallintooblivion;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.WatchService;
-import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 
 /**
  *
@@ -90,23 +87,27 @@ public class FallIntoOblivion {
                 // This seems to be for debug purposes only
                 System.out.println("LOG DEBUG: Encryption work is running");
                 boolean setenabled = false;
+                String cyphertype;
+                String keysize;
+                String hashtype;
+                String filevalidation;
                 propertiesLock.lock();
                 try{
                     setenabled = Boolean.parseBoolean(conf.getProp("setenabled"));
-                    String filevalidation = conf.getProp("filevalidation");
-                    String hashtype = conf.getProp("hashtype");
-                    String keysize = conf.getProp("keysize");
-                    String cyphertype = conf.getProp("cyphertype");
+                    filevalidation = conf.getProp("filevalidation");
+                    hashtype = conf.getProp("hashtype");
+                    keysize = conf.getProp("keysize");
+                    cyphertype = conf.getProp("cyphertype");
                 } finally {
                     propertiesLock.unlock();
                 }
                 
-                WatchDir.foldersToEncryptLock.lock();
+                /*WatchDir.foldersToEncryptLock.lock();
                 try{
                     System.out.println(WatchDir.foldersToEncrypt.toString());
                 }   finally {
                     WatchDir.foldersToEncryptLock.unlock();
-                }
+                }*/
                     
                 // the input area desapeared so you make a new one
                 System.out.print("FallIntoOblivion> ");
@@ -114,6 +115,43 @@ public class FallIntoOblivion {
                     return;                   //Everything above this is supposed to run even if it's not setEnabled
                 
                 //Encypting
+                WatchDir.foldersToEncryptLock.lock();
+                try{
+                    File file;
+                    for(Object f : WatchDir.foldersToEncrypt) {
+                        file = new File((String) f);
+                        
+                        try {
+                            Assinatura fileSigning = new Assinatura();
+                            
+                            byte[] fBytes = Ler.umFicheiro(file.getAbsolutePath());
+                            
+                            File folder = new File("Fall_Into_Oblivion/Trashed/" + file.getName());
+                            if (!folder.exists()) {
+                                folder.mkdir();
+                            }
+                            
+                            fileSigning.gerarChaves(file.getAbsolutePath(), 
+                                    "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".sig",
+                                    "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".pk");
+                            
+                            String zeroHASH = SHA256.calculateStringMAC("0000");
+                            System.out.println(zeroHASH.subSequence(0, 32).toString());
+                            byte[] encBytes = AES_CBC.encrypt(zeroHASH.subSequence(0, 32).toString(), "0000000000000000", fBytes);
+                            Ler.escreverFicheiro("Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(), cyphertype.replaceAll("_",""), encBytes);
+                            
+                            file.delete();
+                            WatchDir.foldersToEncrypt.remove(f);
+                        } catch (Exception ex) {
+                            WatchDir.foldersToEncrypt.remove(f);
+                        }
+                            
+                       
+                    }
+                }   finally {
+                    WatchDir.foldersToEncryptLock.unlock();
+                }
+                
                 
                 
             }
@@ -131,8 +169,8 @@ public class FallIntoOblivion {
             }
         };
         String choice;
-        executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 10, 10 , TimeUnit.SECONDS);
-        executorDetect.schedule(TaskDetect, 5, TimeUnit.SECONDS);
+        executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 0, 10 , TimeUnit.SECONDS);
+        executorDetect.schedule(TaskDetect, 0, TimeUnit.SECONDS);
         while(true){
             System.out.print("FallIntoOblivion> ");
             choice=Ler.umaString();
