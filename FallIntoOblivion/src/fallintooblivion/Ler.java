@@ -66,5 +66,6 @@ public class Ler{
         fsIn.close();
         return getBytes;
     }
+   
     
 }

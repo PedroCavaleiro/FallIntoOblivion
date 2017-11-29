@@ -60,6 +60,7 @@ public class SHA256 {
         for (int i=0; i < digest.length; i++) {
             result += Integer.toString( ( digest[i] & 0xff ) + 0x100, 16).substring( 1 );
         }
+        System.out.println(result.toString());
         return result;
     }
     

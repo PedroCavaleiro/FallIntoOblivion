@@ -121,7 +121,7 @@ public class FallIntoOblivion {
                 // deleting the "FallIntoOblivion> " text
                 System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
                 // This seems to be for debug purposes only
-                System.out.println("LOG DEBUG: Detection work is now running");
+              // TIREI  System.out.println("LOG DEBUG: Detection work is now running");
                 watcher.processEvents();
                 System.out.println("detect Stopping");
             }
