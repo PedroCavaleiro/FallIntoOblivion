@@ -36,43 +36,43 @@ public class Assinatura {
     byte[] finalSign;
     
     
-    public void gerarChaves() throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, IOException, SignatureException{
-    signature = Signature.getInstance("DSA");
-    KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");
-    SecureRandom secureRan= new SecureRandom();
-    kpg.initialize(512, secureRan);
-    KeyPair parChaves= kpg.generateKeyPair();
-    PrivateKey priv= parChaves.getPrivate();
-    pub= parChaves.getPublic();
-    
-    signature.initSign(priv);
-    
-    fIn = new FileInputStream("ola.txt"); //ler ficheiro!
-    BufferedInputStream buff=new BufferedInputStream(fIn);
-    byte[] buffer=new byte[1024];
-    int len;
-    
-    while((len=buff.read(buffer) )>=0){
-        signature.update(buffer, 0, len);
-    };
-    
-    buff.close();
-    
-    finalSign=signature.sign();
-    
-    //Guardar assinatura num ficheiro
-    
-    fOutA = new FileOutputStream("sig");
-    fOutA.write(finalSign);
-    fOutA.close();
-    
-    //Guardar chave publica num ficheiro
-    byte[] key=pub.getEncoded();
-    FileOutputStream fOutPK = new FileOutputStream("PubKey");
-    fOutPK.write(key);
-    fOutPK.close();
-    
-    
+    public void gerarChaves(String inFilePath, String outSignature, String outPK) throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, IOException, SignatureException{
+        signature = Signature.getInstance("DSA");
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");
+        SecureRandom secureRan= new SecureRandom();
+        kpg.initialize(512, secureRan);
+        KeyPair parChaves= kpg.generateKeyPair();
+        PrivateKey priv= parChaves.getPrivate();
+        pub= parChaves.getPublic();
+
+        signature.initSign(priv);
+
+        fIn = new FileInputStream(inFilePath); //ler ficheiro | MOD: Passamos o nome do ficheiro como parametro
+        BufferedInputStream buff=new BufferedInputStream(fIn);
+        byte[] buffer=new byte[1024];
+        int len;
+
+        while((len=buff.read(buffer) )>=0){
+            signature.update(buffer, 0, len);
+        };
+
+        buff.close();
+
+        finalSign=signature.sign();
+
+        //Guardar assinatura num ficheiro
+        // MOD: Valor passado por parametro
+        fOutA = new FileOutputStream(outSignature);
+        fOutA.write(finalSign);
+        fOutA.close();
+
+        //Guardar chave publica num ficheiro
+        // MOD: Valor passado por parametro
+        byte[] key=pub.getEncoded();
+        FileOutputStream fOutPK = new FileOutputStream(outPK);
+        fOutPK.write(key);
+        fOutPK.close();
+  
     }
 
    public void verificaAssinatura() throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, Exception{
