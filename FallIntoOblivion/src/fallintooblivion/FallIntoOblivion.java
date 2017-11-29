@@ -25,9 +25,11 @@ public class FallIntoOblivion {
     private static Configs conf = new Configs();
     private static ReentrantLock propertiesLock = new ReentrantLock();
     
-    private static final String availableCommands = "Available commands: setcypher sethash setenabled showconfig\n";
-    private static final String setCypherCommandString = "setcypher [cyphertype] [keysize]\nCypher Types: aes_cbc\n";
-    private static final String setHashCommandString = "sethash [hashtype] \nHash Algorithms: sha256\n";
+    private static final String availableCommands = "Available commands: setcypher setvalidation sethash setenabled showconfig\n";
+    private static final String setCypherCommandString = "setcypher [cyphertype] [keysize]\nCypher Types:\naes_cbc\n";
+    
+    private static final String setFileValidationCommandString = "setvalidation [validationmethod]\nAvailable Methods:\nhash\ndigital_signature\n";
+    private static final String setHashCommandString = "sethash [hashtype] \nHash Algorithms:\nsha256\n";
     
     private static final String setCypherInvalidKeySizeErr = " [keysize] \nInsert a valid number for parameter [keysize]\n";
     private static final String setCypherIncalidKeyErr = " \nInsert a valid positive number for parameter [keysize]\n";
@@ -38,6 +40,7 @@ public class FallIntoOblivion {
             System.out.println("cfg created");
             conf.saveProp("cfgexists", "1");
             conf.saveProp("setenabled", "false");
+            conf.saveProp("filevalidation", "digital_signature");
             conf.saveProp("hashtype", "sha256");
             conf.saveProp("keysize", "16");
             conf.saveProp("cyphertype", "aes_cbc");
@@ -86,10 +89,11 @@ public class FallIntoOblivion {
                 System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
                 // This seems to be for debug purposes only
                 System.out.println("LOG DEBUG: Encryption work is running");
-                String setenabled = "false";
+                boolean setenabled = false;
                 propertiesLock.lock();
                 try{
-                    setenabled = conf.getProp("setenabled");
+                    setenabled = Boolean.parseBoolean(conf.getProp("setenabled"));
+                    String filevalidation = conf.getProp("filevalidation");
                     String hashtype = conf.getProp("hashtype");
                     String keysize = conf.getProp("keysize");
                     String cyphertype = conf.getProp("cyphertype");
@@ -106,7 +110,7 @@ public class FallIntoOblivion {
                     
                 // the input area desapeared so you make a new one
                 System.out.print("FallIntoOblivion> ");
-                if (setenabled.equals(false)) //stopping if setenabled was disabled in the configs
+                if (!setenabled) //stopping if setenabled was disabled in the configs
                     return;                   //Everything above this is supposed to run even if it's not setEnabled
                 
                 //Encypting
@@ -149,6 +153,12 @@ public class FallIntoOblivion {
                         else
                             System.out.println(setHashCommandString);
                         break;
+                    case "setvalidation":
+                        if(words.length == 2)
+                            setFileValidationMethod(words);
+                        else
+                            System.out.println(setFileValidationCommandString);
+                        break;
                     case "setenabled":
                         if(words.length == 2)
                             setEnabled(words);
@@ -158,6 +168,7 @@ public class FallIntoOblivion {
                     case "showconfig":
                         System.out.println("Current Configuration");
                         System.out.println("Encryptor Running: " + conf.getProp("setenabled"));
+                        System.out.println("File Validation Method: " + conf.getProp("filevalidation"));
                         System.out.println("HASH Algorithm: " + conf.getProp("hashtype"));
                         System.out.println("Cypher Type: " + conf.getProp("cyphertype"));
                         System.out.println("Key Size: " + conf.getProp("keysize"));
@@ -174,6 +185,7 @@ public class FallIntoOblivion {
 
     /**
      * Definimos qual o cypher a ser usado
+     * Disponiveis atualmente AES-CBC
      * @param words um array de strings que contem os comandos necessários
      */
     @SuppressWarnings("empty-statement")
@@ -208,6 +220,7 @@ public class FallIntoOblivion {
 
     /**
      * Define o hash a ser usado
+     * Dísponiveis atualmente SHA256
      * @param words um array de strings que contem os comandos necessários
      */
     private static void setHash(String[] words) {
@@ -223,7 +236,39 @@ public class FallIntoOblivion {
                     }
                     break;
                 default:
-                    System.out.println(setHashCommandString); //add new types here too
+                    System.out.println(setHashCommandString);
+        }
+    }
+    
+    /**
+     * Define qual o método pelo qual vai ser verificada a integridade dos ficheiros
+     * Disponiveis atualmente HASH e Assinatura Digital
+     * @param words um array de strings que contem os comandos necessários
+     */
+    private static void setFileValidationMethod(String[] words) {
+        switch (words[1]){
+                case "hash":
+                    System.out.println("Uploading to configurations");
+                    propertiesLock.lock();
+                    try{
+                        conf.saveProp("filevalidation", words[1]);
+                    } finally {
+                        propertiesLock.unlock();
+                        System.out.println("Uploaded");
+                    }
+                    break;
+                case "digital_signature":
+                    System.out.println("Uploading to configurations");
+                    propertiesLock.lock();
+                    try{
+                        conf.saveProp("filevalidation", words[1]);
+                    } finally {
+                        propertiesLock.unlock();
+                        System.out.println("Uploaded");
+                    }
+                    break;
+                default:
+                    System.out.println(setFileValidationCommandString);
         }
     }
     

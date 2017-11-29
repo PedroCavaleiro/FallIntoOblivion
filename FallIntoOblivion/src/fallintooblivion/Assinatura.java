@@ -35,7 +35,17 @@ public class Assinatura {
     PublicKey pub;
     byte[] finalSign;
     
-    
+    /**
+     * Gera as chaves e cria uma assinatura para um ficheiro
+     * @param inFilePath                   caminho para o ficheiro a ser assinado
+     * @param outSignature                 caminho para guardar a assinatura
+     * @param outPK                        caminho para guardar a chave publica
+     * @throws NoSuchAlgorithmException    Excepção para algoritmo invalido
+     * @throws InvalidKeyException         Excepção para chave invalida
+     * @throws FileNotFoundException       Excepção para ficheiro não encontrado
+     * @throws IOException                 Excepção generica de input / output
+     * @throws SignatureException          Excepção de assinatura
+     */
     public void gerarChaves(String inFilePath, String outSignature, String outPK) throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, IOException, SignatureException{
         signature = Signature.getInstance("DSA");
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");
@@ -75,6 +85,17 @@ public class Assinatura {
   
     }
 
+    /**
+     * 
+     * @param inFilePath                 caminho para o ficheiro a ser assinado
+     * @param inSignature                caminho para a assinatura
+     * @param inPK                       caminho para a chave publica
+     * @return                           verdadeiro se a assinatura se verificar caso contrario falso
+     * @throws NoSuchAlgorithmException  Excepção para algoritmo inexistente
+     * @throws InvalidKeyException       Excepção para chave invalida
+     * @throws FileNotFoundException     Excepção para ficheiro não encontrado
+     * @throws Exception                 Excepção genérica
+     */
    public boolean verificaAssinatura(String inFilePath, String inSignature, String inPK) throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, Exception{
        
        FileInputStream keyfis = new FileInputStream(inPK);
