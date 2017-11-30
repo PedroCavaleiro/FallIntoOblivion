@@ -130,48 +130,49 @@ public class FallIntoOblivion {
                 //Encypting
                 WatchDir.foldersToEncryptLock.lock();
                 try{
-                    
                     File file;
-                    file = new File((String) WatchDir.foldersToEncrypt.get(WatchDir.foldersToEncrypt.size()-1));
-
-                    try {
-                        Assinatura fileSigning = new Assinatura();
+                    for(Object f : WatchDir.foldersToEncrypt) {
+                        file = new File((String) f);
                         
-                        if (file.isDirectory()) {
-                            try {
-                                FolderZiper.zipFolder(file.getAbsolutePath(), file.getAbsolutePath() + ".zip");
-                            } catch (Exception ex) {
-                                System.out.println(ex);
+                        try {
+                            Assinatura fileSigning = new Assinatura();
+ 
+                            if (file.isDirectory()) {
+                                try {
+                                    FolderZiper.zipFolder(file.getAbsolutePath(), file.getAbsolutePath() + ".zip");
+                                } catch (Exception ex) {
+                                    System.out.println(ex);
+                                }
+                                deleteDirectory(file);
+                                WatchDir.foldersToEncrypt.remove(file);
+                                file = new File(file.getAbsolutePath() + ".zip");
+                            }  
+                            
+                            byte[] fBytes = Ler.umFicheiro(file.getAbsolutePath());
+                            
+                            File folder = new File("Fall_Into_Oblivion/Trashed/" + file.getName());
+                            if (!folder.exists()) {
+                                folder.mkdir();
                             }
-                            deleteDirectory(file);
-                            file = new File(file.getAbsolutePath() + ".zip");
+                            
+                            fileSigning.gerarChaves(file.getAbsolutePath(), 
+                                 "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".sig",
+                                    "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".pk");
+                            
+                            String zeroHASH = SHA256.calculateStringMAC("0000");
+                            System.out.println(zeroHASH.subSequence(0, 16).toString());
+                            byte[] encBytes = AES_CBC.encrypt(zeroHASH.subSequence(0, 16).toString(), "0000000000000000", fBytes);
+                            Ler.escreverFicheiro("Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(), cyphertype.replaceAll("_",""), encBytes);
+                            encryptedFolders.add(folder.toString());
+                            file.delete();
+                            WatchDir.foldersToEncrypt.remove(f);
+                        } catch (Exception ex) {
+                            WatchDir.foldersToEncrypt.remove(f);
                         }
-                        
-
-                        byte[] fBytes = Ler.umFicheiro(file.getAbsolutePath());
-
-                        File folder = new File("Fall_Into_Oblivion/Trashed/" + file.getName());
-                        if (!folder.exists()) {
-                            folder.mkdir();
-                        }
-
-                        fileSigning.gerarChaves(file.getAbsolutePath(), 
-                                "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".sig",
-                                "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".pk");
-
-                        String zeroHASH = SHA256.calculateStringMAC("0000");
-                        System.out.println(zeroHASH.subSequence(0, 16).toString());
-                        byte[] encBytes = AES_CBC.encrypt(zeroHASH.subSequence(0, 16).toString(), "0000000000000000", fBytes);
-                        Ler.escreverFicheiro("Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(), cyphertype.replaceAll("_",""), encBytes);
-                        encryptedFolders.add(folder.toString());
-                        file.delete();
-                        WatchDir.foldersToEncrypt.remove(file);
-                    } catch (Exception ex) {
-                        WatchDir.foldersToEncrypt.remove(file);
-                    }
                             
                        
-                    } finally {
+                    }
+                }   finally {
                     WatchDir.foldersToEncryptLock.unlock();
                     return;
                 }
@@ -190,7 +191,7 @@ public class FallIntoOblivion {
             }
         };
         String choice;
-        executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 0, 5 , TimeUnit.SECONDS);
+        executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 0, 100 , TimeUnit.MILLISECONDS);
         executorDetect.schedule(TaskDetect, 0, TimeUnit.SECONDS);
         while(true){
             System.out.print("FallIntoOblivion> ");
