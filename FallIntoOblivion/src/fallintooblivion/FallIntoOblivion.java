@@ -167,7 +167,7 @@ public class FallIntoOblivion {
             }
         };
         String choice;
-        executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 0, 10 , TimeUnit.SECONDS);
+        executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 0, 5 , TimeUnit.SECONDS);
         executorDetect.schedule(TaskDetect, 0, TimeUnit.SECONDS);
         while(true){
             System.out.print("FallIntoOblivion> ");
