@@ -79,7 +79,7 @@ public class FallIntoOblivion {
                 System.out.println("Trashed DIR created");
             }
         }
-        ScheduledExecutorService executorZip = Executors.newSingleThreadScheduledExecutor();
+        
         ScheduledExecutorService executorEncrypt = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService executorDetect = Executors.newSingleThreadScheduledExecutor();
         
