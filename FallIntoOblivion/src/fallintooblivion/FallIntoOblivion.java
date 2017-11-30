@@ -151,12 +151,16 @@ public class FallIntoOblivion {
                         try {
                             Assinatura fileSigning = new Assinatura();
  
-                            if(Files.isDirectory(file.toPath())) {
-                                Thread t = new Thread(new zipDirThread(file.getAbsolutePath()));
-                                t.start();
-                                //zipar pasta
-                                continue;
-                            }    
+                            if (file.isDirectory()) {
+                                try {
+                                    FolderZiper.zipFolder(file.getAbsolutePath(), file.getAbsolutePath() + ".zip");
+                                } catch (Exception ex) {
+                                    System.out.println(ex);
+                                }
+                                deleteDirectory(file);
+                                WatchDir.foldersToEncrypt.remove(file);
+                                file = new File(file.getAbsolutePath() + ".zip");
+                            }  
                             
                             byte[] fBytes = Ler.umFicheiro(file.getAbsolutePath());
                             
@@ -201,7 +205,7 @@ public class FallIntoOblivion {
             }
         };
         String choice;
-        executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 0, 5 , TimeUnit.SECONDS);
+        executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 0, 100 , TimeUnit.MILLISECONDS);
         executorDetect.schedule(TaskDetect, 0, TimeUnit.SECONDS);
         while(true){
             System.out.print("FallIntoOblivion> ");
