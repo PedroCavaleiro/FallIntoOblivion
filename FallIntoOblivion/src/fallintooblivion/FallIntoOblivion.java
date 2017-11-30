@@ -96,9 +96,13 @@ public class FallIntoOblivion {
             String str;
             zipDirThread(String s) { str = s; }
             public void run() {
-                File directoryToZip = new File("");
-                //adicionar codigo para zipar
-                directoryToZip.delete();
+                File directoryToZip = new File(str);
+                try {
+                    FolderZiper.zipFolder(str, str + ".zip");
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
+                deleteDirectory(directoryToZip);
             }
         }
         
@@ -146,6 +150,11 @@ public class FallIntoOblivion {
 
                     try {
                         Assinatura fileSigning = new Assinatura();
+                        
+                        if (file.isDirectory()) {
+                            Thread t = new Thread(new zipDirThread(file.getAbsolutePath()));
+                            t.start();
+                        }
 
                         byte[] fBytes = Ler.umFicheiro(file.getAbsolutePath());
 
@@ -372,5 +381,22 @@ public class FallIntoOblivion {
                 result += list.get(i)+",";
         }
         return result;
+    }
+    
+    public static boolean deleteDirectory(File directory) {
+        if(directory.exists()){
+            File[] files = directory.listFiles();
+            if(null!=files){
+                for(int i=0; i<files.length; i++) {
+                    if(files[i].isDirectory()) {
+                        deleteDirectory(files[i]);
+                    }
+                    else {
+                        files[i].delete();
+                    }
+                }
+            }
+        }
+        return(directory.delete());
     }
 }
