@@ -7,6 +7,7 @@ package fallintooblivion;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,17 +31,26 @@ public class FallIntoOblivion {
     
     private static final String setCypherInvalidKeySizeErr = " [keysize] \nInsert a valid number for parameter [keysize]\n";
     private static final String setCypherIncalidKeyErr = " \nInsert a valid positive number for parameter [keysize]\n";
+    
+    public static ArrayList encryptedFolders = new ArrayList<String>();
 
     public static void main(String[] args) throws IOException {
         //test if conf file exists if not create a default
         if(conf.getProp("cfgexists").isEmpty()){
             System.out.println("cfg created");
             conf.saveProp("cfgexists", "1");
-            conf.saveProp("setenabled", "false");
+            conf.saveProp("setenabled", "true");
             conf.saveProp("filevalidation", "digital_signature");
             conf.saveProp("hashtype", "sha256");
             conf.saveProp("keysize", "16");
             conf.saveProp("cyphertype", "aes_cbc");
+            conf.saveProp("encrypted","");
+        }
+        if(!conf.getProp("encrypted").equals("")){
+            String temp[] = conf.getProp("encrypted").split(",");
+            for(int i = 0; i < temp.length; i++){
+                encryptedFolders.add(temp[i]);
+            }
         }
         //The user is supposed to drop his trash into FallIntoOblivion, it is then cyphered and put into the trashed folder
         //Test if FallIntoOblivion folder exists and if not create it
@@ -117,38 +127,37 @@ public class FallIntoOblivion {
                 //Encypting
                 WatchDir.foldersToEncryptLock.lock();
                 try{
+                    
                     File file;
-                    for(Object f : WatchDir.foldersToEncrypt) {
-                        file = new File((String) f);
-                        
-                        try {
-                            Assinatura fileSigning = new Assinatura();
-                            
-                            byte[] fBytes = Ler.umFicheiro(file.getAbsolutePath());
-                            
-                            File folder = new File("Fall_Into_Oblivion/Trashed/" + file.getName());
-                            if (!folder.exists()) {
-                                folder.mkdir();
-                            }
-                            
-                            fileSigning.gerarChaves(file.getAbsolutePath(), 
-                                    "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".sig",
-                                    "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".pk");
-                            
-                            String zeroHASH = SHA256.calculateStringMAC("0000");
-                            System.out.println(zeroHASH.subSequence(0, 16).toString());
-                            byte[] encBytes = AES_CBC.encrypt(zeroHASH.subSequence(0, 16).toString(), "0000000000000000", fBytes);
-                            Ler.escreverFicheiro("Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(), cyphertype.replaceAll("_",""), encBytes);
-                            
-                            file.delete();
-                            WatchDir.foldersToEncrypt.remove(f);
-                        } catch (Exception ex) {
-                            WatchDir.foldersToEncrypt.remove(f);
+                    file = new File((String) WatchDir.foldersToEncrypt.get(WatchDir.foldersToEncrypt.size()-1));
+
+                    try {
+                        Assinatura fileSigning = new Assinatura();
+
+                        byte[] fBytes = Ler.umFicheiro(file.getAbsolutePath());
+
+                        File folder = new File("Fall_Into_Oblivion/Trashed/" + file.getName());
+                        if (!folder.exists()) {
+                            folder.mkdir();
                         }
+
+                        fileSigning.gerarChaves(file.getAbsolutePath(), 
+                                "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".sig",
+                                "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".pk");
+
+                        String zeroHASH = SHA256.calculateStringMAC("0000");
+                        System.out.println(zeroHASH.subSequence(0, 16).toString());
+                        byte[] encBytes = AES_CBC.encrypt(zeroHASH.subSequence(0, 16).toString(), "0000000000000000", fBytes);
+                        Ler.escreverFicheiro("Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(), cyphertype.replaceAll("_",""), encBytes);
+                        encryptedFolders.add(folder.toString());
+                        file.delete();
+                        WatchDir.foldersToEncrypt.remove(file);
+                    } catch (Exception ex) {
+                        WatchDir.foldersToEncrypt.remove(file);
+                    }
                             
                        
-                    }
-                }   finally {
+                    } finally {
                     WatchDir.foldersToEncryptLock.unlock();
                     return;
                 }
@@ -211,6 +220,8 @@ public class FallIntoOblivion {
                         System.out.println();
                         break;
                     case "exit":
+                        System.out.println(listToString(encryptedFolders));
+                        conf.saveProp("encrypted", listToString(encryptedFolders));
                         System.exit(0);
                     default:
                         System.out.println(availableCommands);
@@ -337,5 +348,16 @@ public class FallIntoOblivion {
                 default:
                     System.out.println("setEnabled [boolean]\n"); //add new types here too
         }
+    }
+    
+    public static String listToString(ArrayList<String> list) {
+        String result = "";
+        for (int i = 0; i < list.size(); i++) {
+            if(i==list.size()-1)
+                result += list.get(i);
+            else
+                result += list.get(i)+",";
+        }
+        return result;
     }
 }
