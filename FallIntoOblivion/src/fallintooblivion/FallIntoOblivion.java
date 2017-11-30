@@ -150,10 +150,8 @@ public class FallIntoOblivion {
                     }
                 }   finally {
                     WatchDir.foldersToEncryptLock.unlock();
+                    return;
                 }
-                
-                
-                
             }
         };
         WatchDir watcher = new WatchDir(Dir.toPath()); //Instanciation of the new trash monitor
