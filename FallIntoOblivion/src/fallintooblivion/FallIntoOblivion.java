@@ -7,6 +7,9 @@ package fallintooblivion;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -76,9 +79,20 @@ public class FallIntoOblivion {
                 System.out.println("Trashed DIR created");
             }
         }
-                
+        ScheduledExecutorService executorZip = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService executorEncrypt = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService executorDetect = Executors.newSingleThreadScheduledExecutor();
+        
+        class zipDirThread implements Runnable {
+            String str;
+            zipDirThread(String s) { str = s; }
+            public void run() {
+                File directoryToZip = new File("");
+                //adicionar codigo para zipar
+                directoryToZip.delete();
+            }
+        }
+        
         Runnable periodicTaskEncrypt = new Runnable() {
             public void run() {
                 // Clears the text on the line where the cursor is
@@ -123,6 +137,13 @@ public class FallIntoOblivion {
                         
                         try {
                             Assinatura fileSigning = new Assinatura();
+
+                            if(Files.isDirectory(file.toPath())) {
+                                Thread t = new Thread(new zipDirThread(file.getAbsolutePath()));
+                                t.start();
+                                //zipar pasta
+                                continue;
+                            }    
                             
                             byte[] fBytes = Ler.umFicheiro(file.getAbsolutePath());
                             
@@ -338,4 +359,7 @@ public class FallIntoOblivion {
                     System.out.println("setEnabled [boolean]\n"); //add new types here too
         }
     }
+    
+    
+    
 }
