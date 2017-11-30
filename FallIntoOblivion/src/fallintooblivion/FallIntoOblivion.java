@@ -150,6 +150,7 @@ public class FallIntoOblivion {
                     }
                 }   finally {
                     WatchDir.foldersToEncryptLock.unlock();
+                    return;
                 }
                 
                 
