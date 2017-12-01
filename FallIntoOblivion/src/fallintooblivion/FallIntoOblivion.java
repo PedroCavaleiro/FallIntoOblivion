@@ -15,11 +15,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-
-/**
- *
- * @author pedrocavaleiro
- */
 public class FallIntoOblivion {
 
     private static Configs conf = new Configs();
@@ -37,7 +32,8 @@ public class FallIntoOblivion {
     public static ArrayList encryptedFolders = new ArrayList<String>();
 
     public static void main(String[] args) throws IOException {
-        //test if conf file exists if not create a default
+
+        // Test if the configuration file already exists, if not, creates the new config
         if(conf.getProp("cfgexists").isEmpty()){
             System.out.println("cfg created");
             conf.saveProp("cfgexists", "1");
@@ -48,14 +44,18 @@ public class FallIntoOblivion {
             conf.saveProp("cyphertype", "aes_cbc");
             conf.saveProp("encrypted","");
         }
+
+        // Get all the encrypted files/folders
         if(!conf.getProp("encrypted").equals("")){
             String temp[] = conf.getProp("encrypted").split(",");
             for(int i = 0; i < temp.length; i++){
                 encryptedFolders.add(temp[i]);
             }
         }
-        //The user is supposed to drop his trash into FallIntoOblivion, it is then cyphered and put into the trashed folder
-        //Test if FallIntoOblivion folder exists and if not create it
+
+
+        //The user must drop the file into the Fall_Into_Oblivion, it's then cyphered and moved to the Trashed folder
+        // Test if Fall_Into_Oblivion folder exists and if not create it
         File Dir = new File("Fall_Into_Oblivion");
         if (!Dir.exists()) {
             System.out.println("creating directory: " + Dir.getName());
@@ -72,7 +72,7 @@ public class FallIntoOblivion {
             }
         }
 
-        //Test if FallIntoOblivion has a trashed folder if not create it
+        //Test if Fall_Into_Oblivion has a trashed folder if not create it
         File TrashDir = new File(Dir.getName() + "/Trashed");
         if (!TrashDir.exists()) {
             System.out.println("creating directory: " + TrashDir.getName());
@@ -88,17 +88,20 @@ public class FallIntoOblivion {
                 System.out.println("Trashed DIR created");
             }
         }
-        
+
+        // The watchers that will check for new files/folders and encrypt them
         ScheduledExecutorService executorEncrypt = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService executorDetect = Executors.newSingleThreadScheduledExecutor();
-        
+
+        /**
+         * Task that will encrypt the files
+         */
         Runnable periodicTaskEncrypt = new Runnable() {
             public void run() {
-                // Clears the text on the line where the cursor is
-                // deleting the "FallIntoOblivion> " text
-                System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-                // This seems to be for debug purposes only
-                System.out.println("LOG DEBUG: Encryption work is running");
+
+                // The line below is only for debugging purposes, comment when not testing
+                // System.out.println("LOG DEBUG: Encryption work is running");
+
                 boolean setenabled = false;
                 String cyphertype;
                 String keysize;
@@ -114,29 +117,27 @@ public class FallIntoOblivion {
                 } finally {
                     propertiesLock.unlock();
                 }
-                
-                /*WatchDir.foldersToEncryptLock.lock();
-                try{
-                    System.out.println(WatchDir.foldersToEncrypt.toString());
-                }   finally {
-                    WatchDir.foldersToEncryptLock.unlock();
-                }*/
-                    
-                // the input area desapeared so you make a new one
-                System.out.print("FallIntoOblivion> ");
+
                 if (!setenabled) //stopping if setenabled was disabled in the configs
-                    return;                   //Everything above this is supposed to run even if it's not setEnabled
+                    return;                   // Everything above this is supposed to run even if it's not setEnabled
                 
-                //Encypting
+                // Encrypting Process
+                // 1. Lock the detection and encryption tasks running on background
+                // 2. If it's a folder we zip it and delete the folder keeping the zip file
+                // 3. Sign the file and save a Public Key and Signature in the same folder then the encrypted file will be
+                // 4. Encrypt the file
+                // 5. Move the file to the Trashed folder
+                // 6. Delete the unencrypted file
                 WatchDir.foldersToEncryptLock.lock();
-                try{
+                try {
                     File file;
                     for(Object f : WatchDir.foldersToEncrypt) {
                         file = new File((String) f);
                         
                         try {
                             Assinatura fileSigning = new Assinatura();
- 
+
+                            // Check if it's a folder, if so, we zip the folder
                             if (file.isDirectory()) {
                                 try {
                                     FolderZiper.zipFolder(file.getAbsolutePath(), file.getAbsolutePath() + ".zip");
@@ -148,51 +149,82 @@ public class FallIntoOblivion {
                                 file = new File(file.getAbsolutePath() + ".zip");
                             }  
                             
-                            byte[] fBytes = Helpers.FileHelpers.umFicheiro(file.getAbsolutePath());
-                            
+                            byte[] fBytes = Helpers.FileHelpers.lerFicheiro(file.getAbsolutePath());
+
+                            // Check if the folder that will contain the Signature, Public Key and Encrypted file already exists
+                            // If not, creates one
                             File folder = new File("Fall_Into_Oblivion/Trashed/" + file.getName());
                             if (!folder.exists()) {
                                 folder.mkdir();
                             }
-                            
-                            fileSigning.gerarChaves(file.getAbsolutePath(), 
+
+                            // Sign the unencrypted file and save the Signature and the Public Key
+                            fileSigning.assinarFicheiro(file.getAbsolutePath(),
                                  "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".sig",
                                     "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".pk");
-                            
+
+                            // TEMPORARY debugging purposes only
+                            // Create the hash of the pin 0000
+                            // So far we were only able to use 16 Byte key
+                            // 24 Byte or 32 Byte will say Invalid Key Size, even though it's a valid key size
+                            // TODO: Randomize 3 or 4 digit pin without printing it to the user
                             String zeroHASH = SHA256.calculateStringMAC("0000");
-                            System.out.println(zeroHASH.subSequence(0, 16).toString());
-                            byte[] encBytes = AES_CBC.encrypt(zeroHASH.subSequence(0, 16).toString(), "0000000000000000", fBytes);
-                            Helpers.FileHelpers.escreverFicheiro("Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(), cyphertype.replaceAll("_",""), encBytes);
+                            zeroHASH = zeroHASH.subSequence(0, 16).toString();
+
+                            // Encrypt the file using the defined cypher type, it defaults to AES-CBC
+                            byte[] encBytes;
+                            switch (cyphertype) {
+                                case "aes_cbc":
+                                    encBytes = AES_CBC.encrypt(zeroHASH, "0000000000000000", fBytes);
+                                    break;
+                                default:
+                                    encBytes = AES_CBC.encrypt(zeroHASH, "0000000000000000", fBytes);
+                                    break;
+                            }
+
+                            // Write the encrypted file
+                            Helpers.FileHelpers.escreverFicheiro(
+                                    "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(),
+                                    cyphertype.replaceAll("_",""),
+                                    encBytes);
+
+                            // The file was successfully encrypted, we add it to the encrypted list
                             encryptedFolders.add(folder.toString());
+
+                            // Delete the unencrypted file
                             file.delete();
+
+                            // Remove from the file list
                             WatchDir.foldersToEncrypt.remove(f);
                         } catch (Exception ex) {
                             WatchDir.foldersToEncrypt.remove(f);
                         }
-                            
-                       
                     }
-                }   finally {
+                } finally {
+                    // Resume the background tasks
                     WatchDir.foldersToEncryptLock.unlock();
                     return;
                 }
             }
         };
-        WatchDir watcher = new WatchDir(Dir.toPath()); //Instanciation of the new trash monitor
+
+        WatchDir watcher = new WatchDir(Dir.toPath()); // Instantiation of the new trash monitor
+
+        /**
+         * Task that will detect changes on the files to encrypt
+         */
         Runnable TaskDetect = new Runnable() {
             public void run() {
-                // Clears the text on the line where the cursor is
-                // deleting the "FallIntoOblivion> " text
-                System.out.print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
-                // This seems to be for debug purposes only
-              // TIREI  System.out.println("LOG DEBUG: Detection work is now running");
                 watcher.processEvents();
                 System.out.println("detect Stopping");
             }
         };
-        String choice;
+
+        // Start the background tasks
         executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 0, 100 , TimeUnit.MILLISECONDS);
         executorDetect.schedule(TaskDetect, 0, TimeUnit.SECONDS);
+
+        String choice;
         while(true){
             System.out.print("FallIntoOblivion> ");
             choice=Ler.umaString();
@@ -214,6 +246,8 @@ public class FallIntoOblivion {
                             System.out.println(setHashCommandString);
                         break;
                     case "setvalidation":
+                        // Even though this command can be set, it will have no effect on the software behaviour
+                        // Digital Signature will always be used
                         if(words.length == 2)
                             setFileValidationMethod(words);
                         else
@@ -366,7 +400,11 @@ public class FallIntoOblivion {
         }
     }
 
-    
+    /**
+     * Convert an ArrayList of Strings to a String separated by commas
+     * @param list ArrayList of strings
+     * @return string of all the strings in the ArrayList separated by commas
+     */
     public static String listToString(ArrayList<String> list) {
         String result = "";
         for (int i = 0; i < list.size(); i++) {

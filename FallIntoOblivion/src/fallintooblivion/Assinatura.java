@@ -45,7 +45,7 @@ public class Assinatura {
      * @throws IOException                 Excepção generica de input / output
      * @throws SignatureException          Excepção de assinatura
      */
-    public void gerarChaves(String inFilePath, String outSignature, String outPK) throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, IOException, SignatureException{
+    public void assinarFicheiro(String inFilePath, String outSignature, String outPK) throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, IOException, SignatureException{
         signature = Signature.getInstance("DSA");
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");
         SecureRandom secureRan= new SecureRandom();
@@ -95,7 +95,7 @@ public class Assinatura {
      * @throws FileNotFoundException     Excepção para ficheiro não encontrado
      * @throws Exception                 Excepção genérica
      */
-   public boolean verificaAssinatura(String inFilePath, String inSignature, String inPK) throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, Exception{
+   public boolean verificarAssinatura(String inFilePath, String inSignature, String inPK) throws NoSuchAlgorithmException, InvalidKeyException, FileNotFoundException, Exception{
        
        FileInputStream keyfis = new FileInputStream(inPK);
         byte[] encKey = new byte[keyfis.available()]; 

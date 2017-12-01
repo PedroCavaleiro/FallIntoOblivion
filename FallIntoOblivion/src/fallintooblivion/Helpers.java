@@ -46,7 +46,7 @@ public class Helpers {
          * @return         devolve os bytes do ficheiro
          * @throws Exception
          */
-        public static byte[] umFicheiro(String filePath) throws Exception{
+        public static byte[] lerFicheiro(String filePath) throws Exception{
             File file = new File(filePath);
             byte[] getBytes = new byte[(int) file.length()];
             FileInputStream fsIn = new FileInputStream(file);
