@@ -50,27 +50,4 @@ public class Ler{
             }
         }
     }
-    
-    /**
-     * Lê um ficheiro inteiro para a memoria. Não recomendado para ficheiros
-     * grandes
-     * @param filePath caminho completo para o ficheiro
-     * @return         devolve os bytes do ficheiro
-     * @throws Exception 
-     */
-    public static byte[] umFicheiro(String filePath) throws Exception{
-        File file = new File(filePath);
-        byte[] getBytes = new byte[(int) file.length()];
-        FileInputStream fsIn = new FileInputStream(file);
-        fsIn.read(getBytes);
-        fsIn.close();
-        return getBytes;
-    }
-   
-    public static void escreverFicheiro(String filepath, String extension, byte[] bytes) throws Exception {
-        FileOutputStream fsOut = new FileOutputStream(filepath + "." + extension);
-        fsOut.write(bytes);
-        fsOut.close();
-    }
-    
 }

@@ -25,7 +25,7 @@ public class FallIntoOblivion {
     private static Configs conf = new Configs();
     private static ReentrantLock propertiesLock = new ReentrantLock();
     
-    private static final String availableCommands = "Available commands: setcypher setvalidation sethash setenabled showconfig\n";
+    private static final String availableCommands = "Available commands: setcypher sethash setenabled showconfig\n";
     private static final String setCypherCommandString = "setcypher [cyphertype] [keysize]\nCypher Types:\naes_cbc\n";
     
     private static final String setFileValidationCommandString = "setvalidation [validationmethod]\nAvailable Methods:\nhash\ndigital_signature\n";
@@ -63,15 +63,15 @@ public class FallIntoOblivion {
             try{
                 Dir.mkdir();
                 result = true;
-            } 
+            }
             catch(SecurityException se){
                 System.out.println("Something went wrong with creating your new very useless trash folder");
-            }        
-            if(result) {    
-                System.out.println("DIR created");  
+            }
+            if(result) {
+                System.out.println("DIR created");
             }
         }
-        
+
         //Test if FallIntoOblivion has a trashed folder if not create it
         File TrashDir = new File(Dir.getName() + "/Trashed");
         if (!TrashDir.exists()) {
@@ -80,11 +80,11 @@ public class FallIntoOblivion {
             try{
                 TrashDir.mkdir();
                 result = true;
-            } 
+            }
             catch(SecurityException se){
                 System.out.println("You shouln't delete your Trashed folder");
-            }        
-            if(result) {    
+            }
+            if(result) {
                 System.out.println("Trashed DIR created");
             }
         }
@@ -143,12 +143,12 @@ public class FallIntoOblivion {
                                 } catch (Exception ex) {
                                     System.out.println(ex);
                                 }
-                                deleteDirectory(file);
+                                Helpers.FileHelpers.deleteDirectory(file);
                                 WatchDir.foldersToEncrypt.remove(file);
                                 file = new File(file.getAbsolutePath() + ".zip");
                             }  
                             
-                            byte[] fBytes = Ler.umFicheiro(file.getAbsolutePath());
+                            byte[] fBytes = Helpers.FileHelpers.umFicheiro(file.getAbsolutePath());
                             
                             File folder = new File("Fall_Into_Oblivion/Trashed/" + file.getName());
                             if (!folder.exists()) {
@@ -162,7 +162,7 @@ public class FallIntoOblivion {
                             String zeroHASH = SHA256.calculateStringMAC("0000");
                             System.out.println(zeroHASH.subSequence(0, 16).toString());
                             byte[] encBytes = AES_CBC.encrypt(zeroHASH.subSequence(0, 16).toString(), "0000000000000000", fBytes);
-                            Ler.escreverFicheiro("Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(), cyphertype.replaceAll("_",""), encBytes);
+                            Helpers.FileHelpers.escreverFicheiro("Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(), cyphertype.replaceAll("_",""), encBytes);
                             encryptedFolders.add(folder.toString());
                             file.delete();
                             WatchDir.foldersToEncrypt.remove(f);
@@ -305,6 +305,7 @@ public class FallIntoOblivion {
     /**
      * Define qual o método pelo qual vai ser verificada a integridade dos ficheiros
      * Disponiveis atualmente HASH e Assinatura Digital
+     * Atualmente só será usada Assinatura digital
      * @param words um array de strings que contem os comandos necessários
      */
     private static void setFileValidationMethod(String[] words) {
@@ -364,6 +365,7 @@ public class FallIntoOblivion {
                     System.out.println("setEnabled [boolean]\n"); //add new types here too
         }
     }
+
     
     public static String listToString(ArrayList<String> list) {
         String result = "";
@@ -374,22 +376,5 @@ public class FallIntoOblivion {
                 result += list.get(i)+",";
         }
         return result;
-    }
-    
-    public static boolean deleteDirectory(File directory) {
-        if(directory.exists()){
-            File[] files = directory.listFiles();
-            if(null!=files){
-                for(int i=0; i<files.length; i++) {
-                    if(files[i].isDirectory()) {
-                        deleteDirectory(files[i]);
-                    }
-                    else {
-                        files[i].delete();
-                    }
-                }
-            }
-        }
-        return(directory.delete());
     }
 }
