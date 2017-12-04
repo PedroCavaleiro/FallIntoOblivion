@@ -519,7 +519,8 @@ public class FallIntoOblivion {
 
     /**
      * Alguns ficheiros podem conter espaços, aqui juntamos o restante nome do ficheiro
-     * @param words array que contem o nome do ficheiro
+     * @param words  array que contem o nome do ficheiro
+     * @param offset onde, no array, vamos começar a juntar o nome do ficheiro
      * @return nome do ficheiro numa unica string
      */
     private static String joinFileName(String[] words, int offset) {
