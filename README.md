@@ -7,12 +7,13 @@ The pin must not be outputed to the user nor saved anywere on the computer.
 
 The user, to recover the file, has 3 attempts to guess the pin of the file, if it fails to guess the pin the file gets deleted.
 
+The software also checks for errors on the encrypted file upon the decryption process
 
 # Available Cyphers
 So far there is only one cypher implemented, AES-CBC
 
 # Available HASH
-The hash it's only being used to generate a secure key to encrypt the file, the implemented hash is SHA256
+So far there is only on hash algorithm, SHA256 being used to generate the secure key and to create a hash for the encrypted file
 
 # Commands available
 restorefile
@@ -57,7 +58,7 @@ The keysize for now it's allways 16 as there is a problem with java that gives a
 
 sethash [hash]
 
-For now only SHA256 is implemented and changing this setting will not have any impact on the software
+Sets the hash algorithm that will be used to generate the hash of the encrypted file
 
 
 setenabled [boolean]
@@ -77,8 +78,6 @@ Terminates the program and all it's threads
 
 
 # TODO!
-CHECK FILE FallIntoOblivion.java line 301 (complete if else sequence)
-
 CHECK FILE Helpers.java line 223          (follow instructions in TODO tag)
 
 CHECK FILE Helpers.java line 258          (follow instructions in TODO tag)

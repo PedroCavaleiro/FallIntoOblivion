@@ -23,30 +23,23 @@ public class SHA256 {
     * Calcular o MAC de um ficheiro usando o algoritmo SHA256
     * O ficheiro é lido dentro desta função.
     * Se ocorrer um erro é atirada uma excepção
-    * Antes da função terminar é chamada a função getSHA256Checksum() para
-    * converter o checksum the byte[] para String
-    *
+     *
     * @param  filename  a localização do ficheiro
-    * @return           checksum em string
+    * @return           checksum em bytes
     */
-    public static String calculateMAC(String filename) throws Exception {
-        InputStream fileIS =  new FileInputStream(filename);
+    public static byte[] calculateMACBytes(String filename) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        FileInputStream fis = new FileInputStream(filename);
 
-        byte[] buffer = new byte[1024];
-        MessageDigest complete = MessageDigest.getInstance("SHA-256");
-        
-        int numRead;
-        
-        do {
-         numRead = fileIS.read(buffer);
-         if (numRead > 0) {
-           complete.update(buffer, 0, numRead);
-           }
-         } while (numRead != -1);
-        
-        fileIS.close();
-        
-        return getSHA256Checksum(complete.digest());
+        byte[] dataBytes = new byte[1024];
+
+        int nread = 0;
+        while ((nread = fis.read(dataBytes)) != -1) {
+            md.update(dataBytes, 0, nread);
+        };
+        byte[] mdbytes = md.digest();
+
+        return mdbytes;
     }
     
     public static String calculateStringMAC(String text) throws Exception {

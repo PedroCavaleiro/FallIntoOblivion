@@ -5,15 +5,14 @@
  */
 package fallintooblivion;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.Arrays;
 
-/**
- *
- * @author pedrocavaleiro
- */
+
 public class Helpers {
     
     public static class FileHelpers {
@@ -140,7 +139,8 @@ public class Helpers {
             sethash,
             setenabled,
             showconfig,
-            exit
+            exit,
+            nocommand
         }
 
         /**
@@ -211,10 +211,12 @@ public class Helpers {
          * @param filePath  caminho para o ficheiro
          * @param cypher    cypher a ser usado
          */
-        public static void Encrypt(String fileName, String filePath, String cypher) {
+        public static void Encrypt(String fileName, String filePath, String cypher, String hash) {
             try {
 
                 String outFile = "Fall_Into_Oblivion/Trashed/" + fileName + "/" + fileName;
+
+                Assinatura fileSigning = new Assinatura();
 
                 // TEMPORARY debugging purposes only
                 // Create the hash of the pin 0000
@@ -236,6 +238,17 @@ public class Helpers {
                         break;
                 }
 
+                // Calculates the hash of the encrypted file with the defined hash algorithm
+                // it defaults to SHA256
+                switch (hash) {
+                    case "sha256":
+                        Helpers.FileHelpers.writeFile(outFile, ".hash", SHA256.calculateMACBytes(outFile));
+                        break;
+                    default:
+                        Helpers.FileHelpers.writeFile(outFile, ".hash", SHA256.calculateMACBytes(outFile));
+                        break;
+                }
+
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
@@ -247,6 +260,7 @@ public class Helpers {
          * @param file  ficheiro para desencriptar
          */
         public static void Decrypt(String pin, String file) {
+            boolean deleteFiles = true;
             try {
 
                 // Calcular o HASH usando SHA256 do pin e gerar a chave de 16 bytes
@@ -254,28 +268,49 @@ public class Helpers {
                 pinHASH = pinHASH.subSequence(0, 16).toString();
 
                 // Carregar o ficheiro encriptado para memoria, desencriptar e guardar
-
                 // TODO: not all files will be aescbc
                 File encFile = new File("Fall_Into_Oblivion/Trashed/" + file + "/" + file + ".aescbc");
 
-                // Criar a pasta que vai guardar a assinatura e o novo ficheiro
-                File folder = new File("Fall_Into_Oblivion/Restored/" + file);
-                if (!folder.exists()) {
-                    folder.mkdir();
+                // Check if the file is valid
+                byte[] checker = SHA256.calculateMACBytes(encFile.getAbsolutePath());
+                byte[] storedHash = Helpers.FileHelpers.readFile(encFile.getAbsolutePath() + ".hash");
+
+                if (Arrays.equals(checker, storedHash)) {
+
+                    // Criar a pasta que vai guardar a assinatura e o novo ficheiro
+                    File folder = new File("Fall_Into_Oblivion/Restored/" + file);
+                    if (!folder.exists()) {
+                        folder.mkdir();
+                    }
+
+                    String outFile = "Fall_Into_Oblivion/Restored/" + file + "/" + file;
+                    try {
+                        AES_CBC.copy(Cipher.DECRYPT_MODE, encFile.getAbsolutePath(), outFile,
+                            pinHASH, "0000000000000000");
+                        System.out.println("The file was unlocked!\n" +
+                            "The file is now located in \"Fall_Into_Oblivion/Restored/" + file + "/\"");
+                    } catch (Exception ex) {
+                        System.out.println("The pin " + pin + " is incorrect");
+                        deleteFiles = false;
+                    }
+
+                    Helpers.FileHelpers.writeFile(outFile, ".sig",
+                            Helpers.FileHelpers.readFile("Fall_Into_Oblivion/Trashed/" + file + "/" + file + ".sig"));
+                    Helpers.FileHelpers.writeFile(outFile, ".pk",
+                            Helpers.FileHelpers.readFile("Fall_Into_Oblivion/Trashed/" + file + "/" + file + ".pk"));
+
+                } else {
+                    System.out.println("CRITYCAL ERROR: The file is corrupted!\n");
                 }
 
-
-                String outFile = "Fall_Into_Oblivion/Restored/" + file + "/" + file;
-                AES_CBC.copy(Cipher.DECRYPT_MODE, encFile.getAbsolutePath(), outFile,
-                        pinHASH, "0000000000000000");
-
-                Helpers.FileHelpers.writeFile(outFile, ".sig",
-                        Helpers.FileHelpers.readFile("Fall_Into_Oblivion/Trashed/" + file + "/" + file + ".sig"));
-                Helpers.FileHelpers.writeFile(outFile, ".pk",
-                        Helpers.FileHelpers.readFile("Fall_Into_Oblivion/Trashed/" + file + "/" + file + ".pk"));
-
-                File dir = new File("Fall_Into_Oblivion/Trashed/" + file + "/");
-                Helpers.FileHelpers.deleteDirectory(dir);
+                if (deleteFiles) {
+                    // We do not want corrupted files in the trash, so we delete them
+                    File dir = new File("Fall_Into_Oblivion/Trashed/" + file + "/");
+                    Helpers.FileHelpers.deleteDirectory(dir);
+                } else {
+                    File dir = new File("Fall_Into_Oblivion/Restored/" + file + "/");
+                    Helpers.FileHelpers.deleteDirectory(dir);
+                }
 
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());

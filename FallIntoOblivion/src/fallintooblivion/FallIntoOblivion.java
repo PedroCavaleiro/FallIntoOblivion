@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package fallintooblivion;
 
 import java.io.File;
@@ -171,7 +166,7 @@ public class FallIntoOblivion {
                                     "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".pk");
 
                             // Encrypt the file
-                            Helpers.Encryptor.Encrypt(file.getName(), file.getAbsolutePath(), cyphertype);
+                            Helpers.Encryptor.Encrypt(file.getName(), file.getAbsolutePath(), cyphertype, hashtype);
 
                             // The file was successfully encrypted, we add it to the encrypted list
                             encryptedFolders.add(folder.toString());
@@ -215,7 +210,7 @@ public class FallIntoOblivion {
             System.out.print("FallIntoOblivion> ");
 
             String choice = "";
-            Helpers.CommandsHelper.Commands command = null;
+            Helpers.CommandsHelper.Commands command = Helpers.CommandsHelper.Commands.nocommand;
 
             // We try to read the string
             try {
@@ -298,7 +293,31 @@ public class FallIntoOblivion {
                         } else {
                             f = new File(file);
                             if (f.exists()) {
-                                // The user has a specific location for this file
+                                f = new File(file);
+                                if (f.exists()) {
+                                    String signatureFile = file + ".sig";
+                                    String publicKeyFile = file + ".pk";
+                                    File sf = new File(signatureFile);
+                                    File pkf = new File(publicKeyFile);
+                                    if (sf.exists() && pkf.exists()) {
+                                        try {
+                                            boolean valid = digitalSignature.verificarAssinatura(
+                                                    f.getAbsolutePath(),
+                                                    sf.getAbsolutePath(),
+                                                    pkf.getAbsolutePath());
+                                            if (valid)
+                                                System.out.println("FILE VALIDATOR: The file matches the signature");
+                                            else
+                                                System.out.println("FILE VALIDATOR: The file does not match the signature");
+                                        } catch (Exception ex) {
+                                            System.out.println(ex.getMessage());
+                                        }
+                                    } else {
+                                        System.out.println("Signature or Public Key files missing\n");
+                                    }
+                                } else {
+                                    System.out.println("We were unable to find that file\n");
+                                }
                             } else {
                                 System.out.println("We were unable to find that file\n");
                             }

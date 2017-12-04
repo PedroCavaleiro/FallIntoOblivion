@@ -13,10 +13,8 @@ import java.io.*;
 import static java.lang.Thread.sleep;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
-/**
- *
- * @author Miguel Brandão
- */
+
+
 public class WatchDir {
     private final WatchService watcher;
     private final Map<WatchKey,Path> keys;
@@ -85,11 +83,14 @@ public class WatchDir {
                 Path child = dir.resolve(name);
  
                 // print out event
-                System.out.format("%s: %s\n", event.kind().name(), child);
+                System.out.println("");
+                // System.out.format("%s: %s\n", event.kind().name(), child); // Original print
+                System.out.format("Trashed: %s\n", child);
+                System.out.print("FallIntoOblivion> ");
                 foldersToEncryptLock.lock();
                 try{
                     foldersToEncrypt.add(child.toString());
-                    System.out.println(foldersToEncrypt.toString());
+                    // System.out.println(foldersToEncrypt.toString());
                 }   finally {
                     foldersToEncryptLock.unlock();
                 }

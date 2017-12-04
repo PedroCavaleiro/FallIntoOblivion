@@ -11,10 +11,7 @@ import java.io.FileOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-/**
- *
- * @author pedrocavaleiro
- */
+
 public class FolderZiper {
     static public void zipFolder(String srcFolder, String destZipFile) throws Exception {
     ZipOutputStream zip = null;

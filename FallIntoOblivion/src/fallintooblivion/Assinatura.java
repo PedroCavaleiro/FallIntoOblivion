@@ -23,10 +23,6 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.spec.X509EncodedKeySpec;
 
-/**
- *
- * @author ricar
- */
 public class Assinatura {
     Signature signature;
     FileInputStream fIn;
