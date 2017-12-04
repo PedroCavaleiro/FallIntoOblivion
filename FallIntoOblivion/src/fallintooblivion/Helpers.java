@@ -205,6 +205,77 @@ public class Helpers {
     public static class Encryptor {
 
         /**
+         * Obtem as tentativas já efetuadas
+         * @param file ficheiro
+         * @return
+         */
+        private static int getAttempts(String file) {
+
+            Assinatura signature = new Assinatura();
+
+            String _file = "Fall_Into_Oblivion/Trashed/" + file + "/" + file;
+            String lockFile = "Fall_Into_Oblivion/Trashed/" + file + "/." + file + ".lock";
+            String sigFile = "Fall_Into_Oblivion/Trashed/" + file + "/.lock.sig";
+            String pubKeyFile = "Fall_Into_Oblivion/Trashed/" + file + "/.lock.pk";
+
+            File fAttempts = new File(lockFile);
+            File sFile = new File(sigFile);
+            File pkFile = new File(pubKeyFile);
+
+            if ((sFile.exists() || pkFile.exists()) && !fAttempts.exists()) {
+                // the system has been tampered with...
+                return -1;
+            } else {
+                try {
+                    if (fAttempts.exists()) {
+                        if (signature.verificarAssinatura(lockFile, sigFile, pubKeyFile)) {
+                            byte[] hash_1 = SHA256.calculateStringMAC(String.valueOf(1) + _file).getBytes("UTF-8");
+                            byte[] hash_2 = SHA256.calculateStringMAC(String.valueOf(2) + _file).getBytes("UTF-8");
+                            byte[] storedHash = Helpers.FileHelpers.readFile(lockFile);
+
+                            if (Arrays.equals(hash_1, storedHash))
+                                return 1;
+                            if (Arrays.equals(hash_2, storedHash))
+                                return 2;
+
+                            return 3;
+                        } else {
+                            return -1;
+                        }
+                    } else {
+                        return 0;
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return -1;
+        }
+
+        /**
+         * Creates an file called filename.lock that contains the current attempt and the file name
+         * A digital signature is created to ensure that the lock file is not tempered
+         * @param file    the name of the file that was trying to be unlocked
+         * @param attempt the nº of the attempt
+         */
+        private static void writeAttempt(String file, int attempt) {
+            Assinatura fileSigning = new Assinatura();
+
+            String _file = "Fall_Into_Oblivion/Trashed/" + file + "/" + file;
+            String lockFile = "Fall_Into_Oblivion/Trashed/" + file + "/." + file + ".lock";
+            String sigFile = "Fall_Into_Oblivion/Trashed/" + file + "/.lock.sig";
+            String pkFile = "Fall_Into_Oblivion/Trashed/" + file + "/.lock.pk";
+
+            try {
+                byte[] hash = SHA256.calculateStringMAC(String.valueOf(attempt) + _file).getBytes("UTF-8");
+                Helpers.FileHelpers.writeFile(lockFile,"", hash);
+                fileSigning.assinarFicheiro(lockFile, sigFile, pkFile);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        /**
          * Encrypta um ficheiro dado um nome do ficheiro e caminho e o cypher a ser usado
          * @param fileName  nome do ficheiro
          * @param filePath  caminho para o ficheiro
@@ -258,6 +329,8 @@ public class Helpers {
          */
         public static void Decrypt(String pin, String file) {
             boolean deleteFiles = true;
+            boolean deleteTempFiles = false;
+
             try {
 
                 // Calcular o HASH usando SHA256 do pin e gerar a chave de 16 bytes
@@ -265,7 +338,6 @@ public class Helpers {
                 pinHASH = pinHASH.subSequence(0, 16).toString();
 
                 // Carregar o ficheiro encriptado para memoria, desencriptar e guardar
-                // TODO: not all files will be aescbc
                 File encFile = new File("Fall_Into_Oblivion/Trashed/" + file + "/" + file + ".aescbc");
 
                 // Check if the file is valid
@@ -287,8 +359,33 @@ public class Helpers {
                         System.out.println("The file was unlocked!\n" +
                             "The file is now located in \"Fall_Into_Oblivion/Restored/" + file + "/\"");
                     } catch (Exception ex) {
+                        int attempts = getAttempts(file);
+
                         System.out.println("The pin " + pin + " is incorrect");
-                        deleteFiles = false;
+
+                        switch (attempts) {
+                            case 0:
+                                System.out.println("You have 2 attempts left");
+                                writeAttempt(file, 1);
+                                deleteFiles = false;
+                                break;
+                            case 1:
+                                System.out.println("You have 1 attempt left");
+                                writeAttempt(file, 2);
+                                deleteFiles = false;
+                                break;
+                            case 2:
+                                System.out.println("This file is no longer recoverable");
+                                writeAttempt(file, 3);
+                                deleteTempFiles = true;
+                                break;
+                            default:
+                                System.out.println("The system was tempered. File deleted.");
+                                deleteTempFiles = true;
+                                break;
+                        }
+
+
                     }
 
                     Helpers.FileHelpers.writeFile(outFile, ".sig",
@@ -297,13 +394,17 @@ public class Helpers {
                             Helpers.FileHelpers.readFile("Fall_Into_Oblivion/Trashed/" + file + "/" + file + ".pk"));
 
                 } else {
-                    System.out.println("CRITYCAL ERROR: The file is corrupted!\n");
+                    System.out.println("CRITICAL ERROR: The file is corrupted!\n");
                 }
 
                 if (deleteFiles) {
                     // We do not want corrupted files in the trash, so we delete them
                     File dir = new File("Fall_Into_Oblivion/Trashed/" + file + "/");
                     Helpers.FileHelpers.deleteDirectory(dir);
+                    if (deleteTempFiles) {
+                        dir = new File("Fall_Into_Oblivion/Restored/" + file + "/");
+                        Helpers.FileHelpers.deleteDirectory(dir);
+                    }
                 } else {
                     File dir = new File("Fall_Into_Oblivion/Restored/" + file + "/");
                     Helpers.FileHelpers.deleteDirectory(dir);
