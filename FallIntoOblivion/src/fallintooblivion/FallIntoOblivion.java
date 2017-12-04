@@ -7,9 +7,7 @@ package fallintooblivion;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,12 +17,6 @@ public class FallIntoOblivion {
 
     private static Configs conf = new Configs();
     private static ReentrantLock propertiesLock = new ReentrantLock();
-    
-    private static final String availableCommands = "Available commands: setcypher sethash setenabled showconfig\n";
-    private static final String setCypherCommandString = "setcypher [cyphertype] [keysize]\nCypher Types:\naes_cbc\n";
-    
-    private static final String setFileValidationCommandString = "setvalidation [validationmethod]\nAvailable Methods:\nhash\ndigital_signature\n";
-    private static final String setHashCommandString = "sethash [hashtype] \nHash Algorithms:\nsha256\n";
     
     private static final String setCypherInvalidKeySizeErr = " [keysize] \nInsert a valid number for parameter [keysize]\n";
     private static final String setCypherIncalidKeyErr = " \nInsert a valid positive number for parameter [keysize]\n";
@@ -89,6 +81,23 @@ public class FallIntoOblivion {
             }
         }
 
+        //Test if Fall_Into_Oblivion has a restored folder if not create it
+        File RestoreDir = new File(Dir.getName() + "/Restored");
+        if (!RestoreDir.exists()) {
+            System.out.println("creating directory: " + RestoreDir.getName());
+            boolean result = false;
+            try{
+                RestoreDir.mkdir();
+                result = true;
+            }
+            catch(SecurityException se){
+                System.out.println("You shouln't delete your Restored folder");
+            }
+            if(result) {
+                System.out.println("Restored DIR created");
+            }
+        }
+
         // The watchers that will check for new files/folders and encrypt them
         ScheduledExecutorService executorEncrypt = Executors.newSingleThreadScheduledExecutor();
         ScheduledExecutorService executorDetect = Executors.newSingleThreadScheduledExecutor();
@@ -120,7 +129,7 @@ public class FallIntoOblivion {
 
                 if (!setenabled) //stopping if setenabled was disabled in the configs
                     return;                   // Everything above this is supposed to run even if it's not setEnabled
-                
+
                 // Encrypting Process
                 // 1. Lock the detection and encryption tasks running on background
                 // 2. If it's a folder we zip it and delete the folder keeping the zip file
@@ -133,7 +142,7 @@ public class FallIntoOblivion {
                     File file;
                     for(Object f : WatchDir.foldersToEncrypt) {
                         file = new File((String) f);
-                        
+
                         try {
                             Assinatura fileSigning = new Assinatura();
 
@@ -147,9 +156,7 @@ public class FallIntoOblivion {
                                 Helpers.FileHelpers.deleteDirectory(file);
                                 WatchDir.foldersToEncrypt.remove(file);
                                 file = new File(file.getAbsolutePath() + ".zip");
-                            }  
-                            
-                            byte[] fBytes = Helpers.FileHelpers.lerFicheiro(file.getAbsolutePath());
+                            }
 
                             // Check if the folder that will contain the Signature, Public Key and Encrypted file already exists
                             // If not, creates one
@@ -163,30 +170,8 @@ public class FallIntoOblivion {
                                  "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".sig",
                                     "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName() + ".pk");
 
-                            // TEMPORARY debugging purposes only
-                            // Create the hash of the pin 0000
-                            // So far we were only able to use 16 Byte key
-                            // 24 Byte or 32 Byte will say Invalid Key Size, even though it's a valid key size
-                            // TODO: Randomize 3 or 4 digit pin without printing it to the user
-                            String zeroHASH = SHA256.calculateStringMAC("0000");
-                            zeroHASH = zeroHASH.subSequence(0, 16).toString();
-
-                            // Encrypt the file using the defined cypher type, it defaults to AES-CBC
-                            byte[] encBytes;
-                            switch (cyphertype) {
-                                case "aes_cbc":
-                                    encBytes = AES_CBC.encrypt(zeroHASH, "0000000000000000", fBytes);
-                                    break;
-                                default:
-                                    encBytes = AES_CBC.encrypt(zeroHASH, "0000000000000000", fBytes);
-                                    break;
-                            }
-
-                            // Write the encrypted file
-                            Helpers.FileHelpers.escreverFicheiro(
-                                    "Fall_Into_Oblivion/Trashed/" + file.getName() + "/" + file.getName(),
-                                    cyphertype.replaceAll("_",""),
-                                    encBytes);
+                            // Encrypt the file
+                            Helpers.Encryptor.Encrypt(file.getName(), file.getAbsolutePath(), cyphertype);
 
                             // The file was successfully encrypted, we add it to the encrypted list
                             encryptedFolders.add(folder.toString());
@@ -224,57 +209,159 @@ public class FallIntoOblivion {
         executorEncrypt.scheduleAtFixedRate(periodicTaskEncrypt, 0, 100 , TimeUnit.MILLISECONDS);
         executorDetect.schedule(TaskDetect, 0, TimeUnit.SECONDS);
 
-        String choice;
+
         while(true){
+
             System.out.print("FallIntoOblivion> ");
-            choice=Ler.umaString();
+
+            String choice = "";
+            Helpers.CommandsHelper.Commands command = null;
+
+            // We try to read the string
+            try {
+                choice = Reader.readString();
+            } catch (Reader.Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+
+            // Split the string by the spaces
             String[] words = choice.split("\\s+");
-            if(!choice.isEmpty())
-                switch (words[0]){
-                    case "setcypher":
-                        if(words.length == 3)
-                            setCypher(words);
-                        else if(words.length == 2)
-                           System.out.println(setCypherCommandString);
-                        else
-                           System.out.println(setCypherCommandString);
-                        break;
-                    case "sethash":
-                        if(words.length == 2)
-                            setHash(words);
-                        else
-                            System.out.println(setHashCommandString);
-                        break;
-                    case "setvalidation":
-                        // Even though this command can be set, it will have no effect on the software behaviour
-                        // Digital Signature will always be used
-                        if(words.length == 2)
-                            setFileValidationMethod(words);
-                        else
-                            System.out.println(setFileValidationCommandString);
-                        break;
-                    case "setenabled":
-                        if(words.length == 2)
-                            setEnabled(words);
-                        else
-                            System.out.println("setenabled [boolean]\n");
-                        break;
-                    case "showconfig":
-                        System.out.println("Current Configuration");
-                        System.out.println("Encryptor Running: " + conf.getProp("setenabled"));
-                        System.out.println("File Validation Method: " + conf.getProp("filevalidation"));
-                        System.out.println("HASH Algorithm: " + conf.getProp("hashtype"));
-                        System.out.println("Cypher Type: " + conf.getProp("cyphertype"));
-                        System.out.println("Key Size: " + conf.getProp("keysize"));
-                        System.out.println();
-                        break;
-                    case "exit":
-                        System.out.println(listToString(encryptedFolders));
-                        conf.saveProp("encrypted", listToString(encryptedFolders));
-                        System.exit(0);
-                    default:
-                        System.out.println(availableCommands);
-                        break;
+
+            // Convert the first string of the array into a command
+            if (!choice.isEmpty()) {
+                try {
+                    command = Helpers.CommandsHelper.translateToCommand(words[0]);
+                } catch (Helpers.CommandsHelper.Exception ex) {
+                    System.out.println("The Command " + words[0] + " was not found!\nType help to see all available commands and options\n");
+                    System.out.println(Helpers.CommandsHelper.availableCommands);
+                    continue;
+                }
+            }
+
+
+            switch (command) {
+
+                case restorefile:
+                    if (words.length > 1) {
+                        try {
+                            Helpers.CommandsHelper.RestoreFileOptions option =
+                                    Helpers.CommandsHelper.translateToRestoreFileOption(words[1]);
+                            switch (option) {
+                                case listfiles:
+                                    System.out.println(listToString(retreiveFileName(encryptedFolders)).replaceAll(",","\n"));
+                                    System.out.println("");
+                                    break;
+                                case decryptfile:
+                                    try {
+                                        Helpers.Encryptor.Decrypt(words[2], joinFileName(words, 3));
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                    }
+                                    break;
+                            }
+                        } catch (Helpers.CommandsHelper.Exception ex) {
+                            System.out.println(ex.getMessage());
+                        }
+                    } else {
+                        System.out.println(Helpers.CommandsHelper.restoreFileOptionsString);
+                    }
+
+                    break;
+
+                case validatefile:
+                    if (words.length > 1) {
+                        Assinatura digitalSignature = new Assinatura();
+                        String file = joinFileName(words, 1);
+                        String restoredDir = "Fall_Into_Oblivion/Restored/" + file + "/";
+                        File f = new File(restoredDir + file);
+                        if (f.exists()) {
+                            String signatureFile = restoredDir + file + ".sig";
+                            String publicKeyFile = restoredDir + file + ".pk";
+                            File sf = new File(signatureFile);
+                            File pkf = new File(publicKeyFile);
+                            if (sf.exists() && pkf.exists()) {
+                                try {
+                                    boolean valid = digitalSignature.verificarAssinatura(
+                                            f.getAbsolutePath(),
+                                            sf.getAbsolutePath(),
+                                            pkf.getAbsolutePath());
+                                    if (valid)
+                                        System.out.println("FILE VALIDATOR: The file matches the signature");
+                                    else
+                                        System.out.println("FILE VALIDATOR: The file does not match the signature");
+                                } catch (Exception ex) {
+                                    System.out.println(ex.getMessage());
+                                }
+                            } else {
+                                System.out.println("Signature or Public Key files missing\n");
+                            }
+                        } else {
+                            f = new File(file);
+                            if (f.exists()) {
+                                // The user has a specific location for this file
+                            } else {
+                                System.out.println("We were unable to find that file\n");
+                            }
+                        }
+                    } else {
+                        System.out.println(Helpers.CommandsHelper.validateFileCommandString);
+                    }
+                    break;
+
+                case setcypher:
+                    if(words.length == 3)
+                        setCypher(words);
+                    else if(words.length == 2)
+                       System.out.println(Helpers.CommandsHelper.setCypherCommandString);
+                    else
+                       System.out.println(Helpers.CommandsHelper.setCypherCommandString);
+                    break;
+
+                case sethash:
+                    if(words.length == 2)
+                        setHash(words);
+                    else
+                        System.out.println(Helpers.CommandsHelper.setHashCommandString);
+                    break;
+
+                case setvalidation:
+                    // Even though this command can be set, it will have no effect on the software behaviour
+                    // Digital Signature will always be used
+                    if(words.length == 2)
+                        setFileValidationMethod(words);
+                    else
+                        System.out.println(Helpers.CommandsHelper.setFileValidationCommandString);
+                    break;
+
+                case setenabled:
+                    if(words.length == 2)
+                        setEnabled(words);
+                    else
+                        System.out.println("setenabled [boolean]\n");
+                    break;
+
+                case showconfig:
+                    System.out.println("Current Configuration");
+                    System.out.println("Encryptor Running: " + conf.getProp("setenabled"));
+                    System.out.println("File Validation Method: " + conf.getProp("filevalidation"));
+                    System.out.println("HASH Algorithm: " + conf.getProp("hashtype"));
+                    System.out.println("Cypher Type: " + conf.getProp("cyphertype"));
+                    System.out.println("Key Size: " + conf.getProp("keysize"));
+                    System.out.println();
+                    break;
+
+                case help:
+                    System.out.println(Helpers.CommandsHelper.helpString);
+                    break;
+
+                case exit:
+                    System.out.println(listToString(encryptedFolders));
+                    conf.saveProp("encrypted", listToString(encryptedFolders));
+                    System.exit(0);
+
+                default:
+                    System.out.println(Helpers.CommandsHelper.availableCommands);
+                    break;
             }
         }
     }
@@ -309,7 +396,7 @@ public class FallIntoOblivion {
                     }
                     break;
                 default:
-                    System.out.println(setCypherCommandString);
+                    System.out.println(Helpers.CommandsHelper.setCypherCommandString);
                     break;
         }
     }
@@ -332,7 +419,7 @@ public class FallIntoOblivion {
                     }
                     break;
                 default:
-                    System.out.println(setHashCommandString);
+                    System.out.println(Helpers.CommandsHelper.setHashCommandString);
         }
     }
     
@@ -365,7 +452,7 @@ public class FallIntoOblivion {
                     }
                     break;
                 default:
-                    System.out.println(setFileValidationCommandString);
+                    System.out.println(Helpers.CommandsHelper.setFileValidationCommandString);
         }
     }
     
@@ -401,11 +488,11 @@ public class FallIntoOblivion {
     }
 
     /**
-     * Convert an ArrayList of Strings to a String separated by commas
-     * @param list ArrayList of strings
-     * @return string of all the strings in the ArrayList separated by commas
+     * Converter um ArrayList para uma string separada por vírgulas
+     * @param list ArrayList de strings
+     * @return todas as strings do arraylist separadas por vírgulas
      */
-    public static String listToString(ArrayList<String> list) {
+    private static String listToString(ArrayList<String> list) {
         String result = "";
         for (int i = 0; i < list.size(); i++) {
             if(i==list.size()-1)
@@ -414,5 +501,35 @@ public class FallIntoOblivion {
                 result += list.get(i)+",";
         }
         return result;
+    }
+
+    /**
+     * Converter um arraylist com strings de caminhos de ficheiros para um arraylist com os nomes dos ficheiros
+     * @param list ArrayList com os caminhos
+     * @return ArrayList com os nomes dos ficheiros
+     */
+    private static ArrayList<String> retreiveFileName(ArrayList<String> list) {
+        ArrayList<String> r = new ArrayList<>();
+        for (String s : list) {
+            File f = new File(s);
+            r.add(f.getName());
+        }
+        return r;
+    }
+
+    /**
+     * Alguns ficheiros podem conter espaços, aqui juntamos o restante nome do ficheiro
+     * @param words array que contem o nome do ficheiro
+     * @return nome do ficheiro numa unica string
+     */
+    private static String joinFileName(String[] words, int offset) {
+        String r = "";
+        for (int i = offset; i < words.length; i++) {
+            if (i == offset)
+                r += words[i];
+            else
+                r += " " + words[i];
+        }
+        return r;
     }
 }
