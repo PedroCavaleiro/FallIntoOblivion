@@ -1,14 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package fallintooblivion;
 
 import javax.crypto.Cipher;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.security.SecureRandom;
 import java.util.Arrays;
 
 
@@ -286,13 +282,19 @@ public class Helpers {
 
                 String outFile = "Fall_Into_Oblivion/Trashed/" + fileName + "/" + fileName;
 
-                // TEMPORARY debugging purposes only
-                // Create the hash of the pin 0000
+
                 // So far we were only able to use 16 Byte key
                 // 24 Byte or 32 Byte will say Invalid Key Size, even though it's a valid key size
-                // TODO: Randomize 3 or 4 digit pin without printing it to the user
-                String pinHASH = SHA256.calculateStringMAC("0000");
+                RandomString pinGenerator = new RandomString(4, new SecureRandom(), RandomString.Symbols.digits);
+                String genPin = pinGenerator.nextString();
+                String pinHASH = SHA256.calculateStringMAC(genPin);
                 pinHASH = pinHASH.subSequence(0, 16).toString();
+
+                // System.out.println(genPin); // Uncomment this line to view the generated pin
+
+                // Uncomment the two lines below to generate the key to the pin 0000
+                // String pinHASH = SHA256.calculateStringMAC("0000");
+                // pinHASH = pinHASH.subSequence(0, 16).toString();
 
                 // Encrypt the file using the defined cypher type, it defaults to AES-CBC
                 switch (cypher) {
