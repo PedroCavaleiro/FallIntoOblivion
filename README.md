@@ -76,14 +76,26 @@ exit
 
 Terminates the program and all it's threads
 
-
-# TODO!
-CHECK FILE Helpers.java line 223          (follow instructions in TODO tag)
-
-CHECK FILE Helpers.java line 258          (follow instructions in TODO tag)
-
-Implement the decryption check on line 269 on file Helpers.java
-
-
 # Build and Test
 To build and test, open the project using IntelliJ IDEA, Netbeans or other Java IDE and run the program
+
+# How does it work
+On the first start the program will create a config.cfg file to save the settings and will create 3 folders Fall_Into_Oblivion, Trashed, Restored.
+
+The folders Trashed and restored will be inside the Fall_Into_Oblivion folder
+
+Once these folders are created and the software is running you can move the files into the root of the folder "Fall_Into_Oblivion" and not the "Trashed" folder, the software will then sign and encrypt, with a random four digit pin unknown to the user, the file and will create a hash of the encrypted file.
+
+The unencrypted file is now deleted and inside the trashed folder you have another folder with the file name and extension, inside that folder there should be four files. filename.ext.aescbc filename.ext.sig filename.ext.pk filename.ext.aescbc.hash
+
+These files contain the encrypted file, the signature, the public key and the hash of the encrypted file
+
+Upon decryption the software first check the integrity of the encrypted file if it's ok it tries tries to decrypt the file.
+
+If the pin is incorrect the software will search for the files .filename.ext.lock, .lock.sig and lock.pk if none of these files are not found the software will create them.
+
+The file filename.ext.lock contains the hash of the attempt and filename
+
+After three attempts the file is deleted
+
+If there is only one file missing lock.sig, lock.pk or .filename.ext.lock the system deletes the file
