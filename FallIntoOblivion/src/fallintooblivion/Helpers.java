@@ -5,7 +5,6 @@
  */
 package fallintooblivion;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,7 +21,7 @@ public class Helpers {
          * @param directory diretório a ser apagado
          * @return verdadeiro se foi apagado caso contrario falso
          */
-        public static boolean deleteDirectory(File directory) {
+        public static void deleteDirectory(File directory) {
             if(directory.exists()){
                 File[] files = directory.listFiles();
                 if(null!=files){
@@ -36,7 +35,7 @@ public class Helpers {
                     }
                 }
             }
-            return(directory.delete());
+            directory.delete();
         }
 
         /**
@@ -215,8 +214,6 @@ public class Helpers {
             try {
 
                 String outFile = "Fall_Into_Oblivion/Trashed/" + fileName + "/" + fileName;
-
-                Assinatura fileSigning = new Assinatura();
 
                 // TEMPORARY debugging purposes only
                 // Create the hash of the pin 0000

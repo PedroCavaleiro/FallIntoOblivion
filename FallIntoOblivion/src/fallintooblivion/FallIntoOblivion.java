@@ -1,8 +1,10 @@
 package fallintooblivion;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -15,8 +17,6 @@ public class FallIntoOblivion {
     
     private static final String setCypherInvalidKeySizeErr = " [keysize] \nInsert a valid number for parameter [keysize]\n";
     private static final String setCypherIncalidKeyErr = " \nInsert a valid positive number for parameter [keysize]\n";
-    
-    public static ArrayList encryptedFolders = new ArrayList<String>();
 
     public static void main(String[] args) throws IOException {
 
@@ -29,15 +29,6 @@ public class FallIntoOblivion {
             conf.saveProp("hashtype", "sha256");
             conf.saveProp("keysize", "16");
             conf.saveProp("cyphertype", "aes_cbc");
-            conf.saveProp("encrypted","");
-        }
-
-        // Get all the encrypted files/folders
-        if(!conf.getProp("encrypted").equals("")){
-            String temp[] = conf.getProp("encrypted").split(",");
-            for(int i = 0; i < temp.length; i++){
-                encryptedFolders.add(temp[i]);
-            }
         }
 
 
@@ -130,8 +121,9 @@ public class FallIntoOblivion {
                 // 2. If it's a folder we zip it and delete the folder keeping the zip file
                 // 3. Sign the file and save a Public Key and Signature in the same folder then the encrypted file will be
                 // 4. Encrypt the file
-                // 5. Move the file to the Trashed folder
-                // 6. Delete the unencrypted file
+                // 5. Generate the hash of the encrypted file and save it along with the file
+                // 6. Move the file to the Trashed folder
+                // 7. Delete the unencrypted file
                 WatchDir.foldersToEncryptLock.lock();
                 try {
                     File file;
@@ -167,9 +159,6 @@ public class FallIntoOblivion {
 
                             // Encrypt the file
                             Helpers.Encryptor.Encrypt(file.getName(), file.getAbsolutePath(), cyphertype, hashtype);
-
-                            // The file was successfully encrypted, we add it to the encrypted list
-                            encryptedFolders.add(folder.toString());
 
                             // Delete the unencrypted file
                             file.delete();
@@ -243,7 +232,16 @@ public class FallIntoOblivion {
                                     Helpers.CommandsHelper.translateToRestoreFileOption(words[1]);
                             switch (option) {
                                 case listfiles:
-                                    System.out.println(listToString(retreiveFileName(encryptedFolders)).replaceAll(",","\n"));
+                                    File file = new File("Fall_Into_Oblivion/Trashed");
+                                    String[] directories = file.list(new FilenameFilter() {
+                                        @Override
+                                        public boolean accept(File current, String name) {
+                                            return new File(current, name).isDirectory();
+                                        }
+                                    });
+                                    for (int i = 0; i < directories.length; i++) {
+                                        System.out.println(directories[i]);
+                                    }
                                     System.out.println("");
                                     break;
                                 case decryptfile:
@@ -374,8 +372,6 @@ public class FallIntoOblivion {
                     break;
 
                 case exit:
-                    System.out.println(listToString(encryptedFolders));
-                    conf.saveProp("encrypted", listToString(encryptedFolders));
                     System.exit(0);
 
                 default:
