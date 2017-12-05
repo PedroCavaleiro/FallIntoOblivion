@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 
@@ -218,31 +219,31 @@ public class Helpers {
             File sFile = new File(sigFile);
             File pkFile = new File(pubKeyFile);
 
-            if ((sFile.exists() || pkFile.exists()) && !fAttempts.exists()) {
-                // the system has been tampered with...
+            if (!fAttempts.exists()) {
+                // This file must exist always!
                 return -1;
             } else {
-                try {
-                    if (fAttempts.exists()) {
-                        if (signature.verificarAssinatura(lockFile, sigFile, pubKeyFile)) {
-                            byte[] hash_1 = SHA256.calculateStringMAC(String.valueOf(1) + _file).getBytes("UTF-8");
-                            byte[] hash_2 = SHA256.calculateStringMAC(String.valueOf(2) + _file).getBytes("UTF-8");
-                            byte[] storedHash = Helpers.FileHelpers.readFile(lockFile);
+                if (!sFile.exists() || !pkFile.exists()) {
+                    // These files must exist always!
+                    return -1;
+                } else {
+                    try {
+                        // Only one of these hashes are valid
+                        byte[] hash_0 = SHA256.calculateStringMAC(String.valueOf(0) + _file).getBytes("UTF-8");
+                        byte[] hash_1 = SHA256.calculateStringMAC(String.valueOf(1) + _file).getBytes("UTF-8");
+                        byte[] hash_2 = SHA256.calculateStringMAC(String.valueOf(2) + _file).getBytes("UTF-8");
+                        byte[] storedHash = Helpers.FileHelpers.readFile(lockFile);
 
-                            if (Arrays.equals(hash_1, storedHash))
-                                return 1;
-                            if (Arrays.equals(hash_2, storedHash))
-                                return 2;
-
-                            return 3;
-                        } else {
-                            return -1;
-                        }
-                    } else {
-                        return 0;
+                        if (Arrays.equals(hash_0, storedHash))
+                            return 0;
+                        if (Arrays.equals(hash_1, storedHash))
+                            return 1;
+                        if (Arrays.equals(hash_2, storedHash))
+                            return 2;
+                        return 3;
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
                 }
             }
             return -1;
@@ -282,7 +283,6 @@ public class Helpers {
 
                 String outFile = "Fall_Into_Oblivion/Trashed/" + fileName + "/" + fileName;
 
-
                 // So far we were only able to use 16 Byte key
                 // 24 Byte or 32 Byte will say Invalid Key Size, even though it's a valid key size
                 RandomString pinGenerator = new RandomString(4, new SecureRandom(), RandomString.Symbols.digits);
@@ -318,7 +318,7 @@ public class Helpers {
                         Helpers.FileHelpers.writeFile(outFile, ".hash", SHA256.calculateMACBytes(outFile));
                         break;
                 }
-
+                writeAttempt(fileName, 0);
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
