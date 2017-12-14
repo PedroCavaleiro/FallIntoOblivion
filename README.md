@@ -99,3 +99,15 @@ The file filename.ext.lock contains the hash of the attempt and filename
 After three attempts the file is deleted
 
 If there is only one file missing lock.sig, lock.pk or .filename.ext.lock the system deletes the file
+
+# Developers
+
+André Ricardo
+
+Miguel Brandões
+
+Pedro Cavaleiro
+
+Raúl Barbosa
+
+Ricardo Cardoso
